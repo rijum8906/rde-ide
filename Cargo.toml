@@ -1,0 +1,35 @@
+[workspace]
+resolver = "2"
+members = ["bin/ide", "crates/core", "crates/ui"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["RIju Mondal <rijum8906@gmail.com>"]
+license = "MIT"
+rust-version = "1.85.0"
+
+[workspace.dependencies]
+# Internal Crates
+ide-core = { path = "crates/core" }
+ide-ui = { path = "crates/ui" }
+
+# Async & Concurrency
+tokio = { version = "1.52.3", features = [
+  "rt-multi-thread",
+  "macros",
+  "time",
+  "signal",
+] }
+
+# Serialization
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.150"
+
+# Error
+thiserror = "2.0.18"
+
+# Logging
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+tracing-appender = "0.2.5"
