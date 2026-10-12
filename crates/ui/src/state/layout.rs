@@ -3,8 +3,9 @@
 //! This module provides the state management for the layout of the user interface
 //! components of the IDE project.
 
+use ide_core::error::{IdeError, Result};
+
 use crate::constant::{MIN_SCREEN_HEIGHT, MIN_SCREEN_WIDTH};
-use crate::error::{Result, UiError};
 
 /// Manages the overall layout mode and individual widget states of the UI.
 pub struct LayoutState {
@@ -28,12 +29,12 @@ impl LayoutState {
     /// Validates that the terminal meets minimum size requirements.
     pub fn validate_screen_size(screen_height: u16, screen_width: u16) -> Result<()> {
         if screen_height < MIN_SCREEN_HEIGHT || screen_width < MIN_SCREEN_WIDTH {
-            return Err(UiError::ScreenTooSmall(
-                MIN_SCREEN_HEIGHT,
-                MIN_SCREEN_WIDTH,
-                screen_height,
-                screen_width,
-            ));
+            return Err(IdeError::ScreenTooSmall {
+                min_w: MIN_SCREEN_WIDTH,
+                min_h: MIN_SCREEN_HEIGHT,
+                cur_w: screen_width,
+                cur_h: screen_height,
+            });
         }
         Ok(())
     }

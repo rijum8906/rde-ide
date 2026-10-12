@@ -3,6 +3,5 @@
 //! This module provides the user interface components and functionality for the IDE project.
 
 pub mod constant;
-pub mod error;
 pub mod state;
 pub mod ui;

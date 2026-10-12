@@ -7,7 +7,12 @@ async fn main() -> Result<()> {
     let mut terminal = ratatui::init();
 
     // Create UI instance
-    let mut ui = Ui::new()?;
+    let mut ui = match Ui::new() {
+        Ok(u) => u,
+        Err(e) => {
+            return Err(ide_core::error::IdeError::UnknownError(e.to_string()));
+        }
+    };
 
     // Run application loop
     let result = ui.run(&mut terminal);

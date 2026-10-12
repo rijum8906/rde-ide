@@ -27,6 +27,21 @@ pub enum IdeError {
     #[error("Parse error: {0}")]
     ParseError(String),
 
+    /// Ui error
+    #[error("Ui error: {0}")]
+    UiError(String),
+
+    /// Represents an error that occurs when the terminal screen size is too small.
+    #[error(
+        "Screen size too small: minimum required is {min_w}x{min_h}, current size is {cur_w}x{cur_h}"
+    )]
+    ScreenTooSmall {
+        min_w: u16,
+        min_h: u16,
+        cur_w: u16,
+        cur_h: u16,
+    },
+
     /// Represents an unknown error.
     #[error("Unknown error: {0}")]
     UnknownError(String),
