@@ -3,7 +3,7 @@
 //! This module provides the user interface components and functionality for the IDE project.
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
-use ide_core::error::{IdeError, Result};
+use domain::error::{IdeError, Result};
 use ratatui::{DefaultTerminal, Frame, layout::Rect};
 use std::time::Duration;
 

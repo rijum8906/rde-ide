@@ -1,5 +1,5 @@
-use ide_core::error::Result;
-use ide_ui::ui::Ui;
+use domain::error::{IdeError, Result};
+use tui::ui::Ui;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
@@ -11,7 +11,7 @@ async fn main() -> Result<()> {
         Ok(u) => u,
         Err(e) => {
             ratatui::restore();
-            return Err(ide_core::error::IdeError::UiError(e.to_string()));
+            return Err(IdeError::UiError(e.to_string()));
         }
     };
 

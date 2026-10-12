@@ -368,6 +368,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "domain"
+version = "0.1.0"
+dependencies = [
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "either"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -556,24 +563,6 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
-
-[[package]]
-name = "ide-core"
-version = "0.1.0"
-dependencies = [
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "ide-ui"
-version = "0.1.0"
-dependencies = [
- "color-eyre",
- "crossterm",
- "ide-core",
- "ratatui",
- "thiserror 2.0.21",
-]
 
 [[package]]
 name = "ident_case"
@@ -1202,10 +1191,10 @@ dependencies = [
 name = "rde-ide"
 version = "0.1.0"
 dependencies = [
- "ide-core",
- "ide-ui",
+ "domain",
  "ratatui",
  "tokio",
+ "tui",
 ]
 
 [[package]]
@@ -1692,6 +1681,17 @@ dependencies = [
  "sharded-slab",
  "thread_local",
  "tracing-core",
+]
+
+[[package]]
+name = "tui"
+version = "0.1.0"
+dependencies = [
+ "color-eyre",
+ "crossterm",
+ "domain",
+ "ratatui",
+ "thiserror 2.0.21",
 ]
 
 [[package]]

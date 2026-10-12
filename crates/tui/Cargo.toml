@@ -1,5 +1,5 @@
 [package]
-name = "ide-ui"
+name = "tui"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -8,7 +8,7 @@ rust-version.workspace = true
 
 [dependencies]
 # Internal Crates
-ide-core.workspace = true
+domain.workspace = true
 
 thiserror.workspace = true
 

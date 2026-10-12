@@ -3,7 +3,7 @@
 //! This module provides the state management for the layout of the user interface
 //! components of the IDE project.
 
-use ide_core::error::Result;
+use domain::error::Result;
 
 /// Manages the overall layout mode and individual widget states of the UI.
 pub struct LayoutState {

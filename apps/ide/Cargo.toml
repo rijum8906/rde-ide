@@ -8,8 +8,8 @@ rust-version.workspace = true
 
 [dependencies]
 # Internal Crates
-ide-core.workspace = true
-ide-ui.workspace = true
+domain.workspace = true
+tui.workspace = true
 
 tokio.workspace = true
 ratatui.workspace = true

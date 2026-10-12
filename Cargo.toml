@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["bin/ide", "crates/core", "crates/ui"]
+members = ["apps/ide", "crates/domain", "crates/tui"]
 
 [workspace.package]
 version = "0.1.0"
@@ -11,8 +11,8 @@ rust-version = "1.85.0"
 
 [workspace.dependencies]
 # Internal Crates
-ide-core = { path = "crates/core" }
-ide-ui = { path = "crates/ui" }
+domain = { path = "crates/domain" }
+tui = { path = "crates/tui" }
 
 # Async & Concurrency
 tokio = { version = "1.52.3", features = [
