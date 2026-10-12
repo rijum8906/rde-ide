@@ -10,7 +10,8 @@ async fn main() -> Result<()> {
     let mut ui = match Ui::new() {
         Ok(u) => u,
         Err(e) => {
-            return Err(ide_core::error::IdeError::UnknownError(e.to_string()));
+            ratatui::restore();
+            return Err(ide_core::error::IdeError::UiError(e.to_string()));
         }
     };
 

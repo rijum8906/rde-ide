@@ -21,4 +21,9 @@ impl UiState {
     pub fn layout_state(&self) -> &LayoutState {
         &self.layout_state
     }
+
+    /// Resizes layout state when screen size changes.
+    pub fn resize(&mut self, screen_height: u16, screen_width: u16) {
+        self.layout_state.resize(screen_height, screen_width);
+    }
 }

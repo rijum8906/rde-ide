@@ -3,40 +3,23 @@
 //! This module provides the state management for the layout of the user interface
 //! components of the IDE project.
 
-use ide_core::error::{IdeError, Result};
-
-use crate::constant::{MIN_SCREEN_HEIGHT, MIN_SCREEN_WIDTH};
+use ide_core::error::Result;
 
 /// Manages the overall layout mode and individual widget states of the UI.
 pub struct LayoutState {
-    layout_mode: LayoutMode,
     widget_states: WidgetStates,
+    layout_mode: LayoutMode,
 }
 
 impl LayoutState {
     /// Creates a new `LayoutState`, validating screen dimensions against minimum requirements.
     pub fn new(layout_mode: LayoutMode, screen_height: u16, screen_width: u16) -> Result<Self> {
-        Self::validate_screen_size(screen_height, screen_width)?;
-
         let widget_states = WidgetStates::default(screen_height, screen_width);
 
         Ok(Self {
             layout_mode,
             widget_states,
         })
-    }
-
-    /// Validates that the terminal meets minimum size requirements.
-    pub fn validate_screen_size(screen_height: u16, screen_width: u16) -> Result<()> {
-        if screen_height < MIN_SCREEN_HEIGHT || screen_width < MIN_SCREEN_WIDTH {
-            return Err(IdeError::ScreenTooSmall {
-                min_w: MIN_SCREEN_WIDTH,
-                min_h: MIN_SCREEN_HEIGHT,
-                cur_w: screen_width,
-                cur_h: screen_height,
-            });
-        }
-        Ok(())
     }
 
     pub fn set_layout_mode(&mut self, layout_mode: LayoutMode) {
@@ -53,6 +36,12 @@ impl LayoutState {
 
     pub fn widget_states_mut(&mut self) -> &mut WidgetStates {
         &mut self.widget_states
+    }
+
+    /// Updates widget layout geometry when the terminal is resized.
+    pub fn resize(&mut self, screen_height: u16, screen_width: u16) {
+        // NOTE: adjust widgets geometry according to the screen size
+        self.widget_states = WidgetStates::default(screen_height, screen_width);
     }
 }
 
@@ -119,7 +108,7 @@ impl WidgetStates {
             top_bar: UiWidgetState {
                 geometry: RectGeometry {
                     top: 0,
-                    bottom: screen_height - 1,
+                    bottom: screen_height.saturating_sub(1),
                     left: 0,
                     right: 0,
                 },
@@ -128,7 +117,7 @@ impl WidgetStates {
             },
             bottom_bar: UiWidgetState {
                 geometry: RectGeometry {
-                    top: screen_height - 2,
+                    top: screen_height.saturating_sub(2),
                     bottom: 0,
                     left: 0,
                     right: 0,
@@ -141,7 +130,7 @@ impl WidgetStates {
                     top: 1,
                     bottom: 2,
                     left: 0,
-                    right: screen_width - 30,
+                    right: screen_width.saturating_sub(30),
                 },
                 is_hidden: false,
                 z_index: 5,
@@ -150,12 +139,38 @@ impl WidgetStates {
                 geometry: RectGeometry {
                     top: 1,
                     bottom: 2,
-                    left: screen_width - 30,
+                    left: screen_width.saturating_sub(30),
                     right: 0,
                 },
                 is_hidden: true,
                 z_index: 5,
             },
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_widget_states_saturating_bounds() {
+        // Verify no underflow panics occur on very small or zero dimensions
+        let states = WidgetStates::default(0, 0);
+        assert_eq!(states.top_bar.geometry.bottom, 0);
+        assert_eq!(states.left_panel.geometry.right, 0);
+
+        let states_small = WidgetStates::default(5, 10);
+        assert_eq!(states_small.top_bar.geometry.bottom, 4);
+        assert_eq!(states_small.bottom_bar.geometry.top, 3);
+        assert_eq!(states_small.left_panel.geometry.right, 0);
+    }
+
+    #[test]
+    fn test_layout_state_resize() {
+        let mut state = LayoutState::new(LayoutMode::Normal, 50, 100).unwrap();
+        state.resize(60, 120);
+        assert_eq!(state.widget_states().top_bar.geometry.bottom, 59);
+        assert_eq!(state.widget_states().left_panel.geometry.right, 90);
     }
 }
