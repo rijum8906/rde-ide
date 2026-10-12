@@ -1,5 +1,5 @@
 [package]
-name = "ui"
+name = "ide-ui"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -7,3 +7,11 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+# Internal Crates
+ide-core.workspace = true
+
+thiserror.workspace = true
+
+ratatui.workspace = true
+color-eyre.workspace = true
+crossterm.workspace = true

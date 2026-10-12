@@ -1,14 +1,8 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+//! UI Module for IDE project.
+//!
+//! This module provides the user interface components and functionality for the IDE project.
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub mod constant;
+pub mod error;
+pub mod state;
+pub mod ui;
