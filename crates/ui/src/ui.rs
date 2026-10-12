@@ -4,18 +4,13 @@
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use ide_core::error::{IdeError, Result};
-use ratatui::{
-    DefaultTerminal, Frame,
-    layout::{Alignment, Rect},
-    style::{Color, Style},
-    text::{Line, Span},
-    widgets::{Block, BorderType, Paragraph, Wrap},
-};
+use ratatui::{DefaultTerminal, Frame, layout::Rect};
 use std::time::Duration;
 
 use crate::{
     constant::{MIN_SCREEN_HEIGHT, MIN_SCREEN_WIDTH},
     state::ui::UiState,
+    widgets::screen_too_small::ScreenTooSmall,
 };
 
 pub struct Ui {
@@ -96,13 +91,13 @@ impl Ui {
         let area = frame.area();
 
         if let Err(IdeError::ScreenTooSmall {
-            min_w,
-            min_h,
+            min_w: _,
+            min_h: _,
             cur_w,
             cur_h,
         }) = Self::validate_screen_size(area.height, area.width)
         {
-            self.render_screen_too_small(frame, area, min_w, min_h, cur_w, cur_h);
+            frame.render_widget(ScreenTooSmall::new(cur_w, cur_h), frame.area());
         } else {
             self.render_normal(frame, area);
         }
@@ -118,93 +113,6 @@ impl Ui {
             ),
             area,
         );
-    }
-
-    fn render_screen_too_small(
-        &self,
-        frame: &mut Frame,
-        area: Rect,
-        min_w: u16,
-        min_h: u16,
-        cur_w: u16,
-        cur_h: u16,
-    ) {
-        // For extremely small viewports, render compact text without borders
-        if area.width < 32 || area.height < 6 {
-            let text = vec![
-                Line::from(Span::styled(
-                    "Screen too small!",
-                    Style::default().fg(Color::Red).bold(),
-                )),
-                Line::from(Span::styled(
-                    format!("{cur_w}x{cur_h} < {min_w}x{min_h}"),
-                    Style::default().fg(Color::Yellow),
-                )),
-            ];
-            let paragraph = Paragraph::new(text).alignment(Alignment::Center);
-            frame.render_widget(paragraph, area);
-            return;
-        }
-
-        // Determine warning box bounds (centered within frame)
-        let box_width = 54.min(area.width);
-        let box_height = 9.min(area.height);
-
-        let vertical_margin = area.height.saturating_sub(box_height) / 2;
-        let horizontal_margin = area.width.saturating_sub(box_width) / 2;
-
-        let popup_area = Rect {
-            x: area.x + horizontal_margin,
-            y: area.y + vertical_margin,
-            width: box_width,
-            height: box_height,
-        };
-
-        let block = Block::bordered()
-            .border_type(BorderType::Rounded)
-            .border_style(Style::default().fg(Color::Yellow))
-            .title(Line::from(vec![
-                Span::styled(" ⚠ ", Style::default().fg(Color::Yellow).bold()),
-                Span::styled(
-                    "Screen Size Too Small",
-                    Style::default().fg(Color::Red).bold(),
-                ),
-                Span::raw(" "),
-            ]))
-            .title_alignment(Alignment::Center);
-
-        let mut lines = Vec::new();
-        if box_height >= 7 {
-            lines.push(Line::from(""));
-        }
-        lines.push(Line::from(vec![
-            Span::raw("Minimum required: "),
-            Span::styled(
-                format!("{min_w} x {min_h}"),
-                Style::default().fg(Color::Green).bold(),
-            ),
-        ]));
-        lines.push(Line::from(vec![
-            Span::raw("Current size:     "),
-            Span::styled(
-                format!("{cur_w} x {cur_h}"),
-                Style::default().fg(Color::Red).bold(),
-            ),
-        ]));
-        if box_height >= 8 {
-            lines.push(Line::from(""));
-            lines.push(Line::from(Span::styled(
-                "Please enlarge the terminal window to continue.",
-                Style::default().fg(Color::Yellow),
-            )));
-        }
-
-        let paragraph = Paragraph::new(lines)
-            .block(block)
-            .alignment(Alignment::Center)
-            .wrap(Wrap { trim: true });
-
-        frame.render_widget(paragraph, popup_area);
     }
 }
 
