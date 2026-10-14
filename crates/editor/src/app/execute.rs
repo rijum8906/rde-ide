@@ -9,6 +9,10 @@ impl App {
             Command::Quit | Command::ForceQuit => {
                 self.is_running = false;
             }
+
+            Command::EnterMode(mode) => {
+                self.set_mode(mode);
+            }
             _ => {
                 // Other commands: implement as you go.
             }

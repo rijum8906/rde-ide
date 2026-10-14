@@ -6,10 +6,9 @@ use domain::{
     buffer::Buffer,
     error::{IdeError, Result},
 };
-use ratatui::{DefaultTerminal, Frame, layout::Rect};
+use ratatui::{DefaultTerminal, Frame};
 use tui::{
     constant::{MIN_SCREEN_HEIGHT, MIN_SCREEN_WIDTH},
-    state::bottom_bar::BottomBarState,
     ui::UiState,
     viewmodel::bottom_bar::BottomBarView,
     widgets::{bottom_bar::BottomBar, screen_too_small::ScreenTooSmall, top_bar::TopBar},
@@ -60,7 +59,7 @@ impl Ui {
         }
     }
 
-    fn render(&self, frame: &mut Frame) {
+    fn render(&mut self, frame: &mut Frame) {
         let area = frame.area();
 
         if let Err(IdeError::ScreenTooSmall {
@@ -76,7 +75,7 @@ impl Ui {
         }
     }
 
-    fn render_ui(&self, frame: &mut Frame) {
+    fn render_ui(&mut self, frame: &mut Frame) {
         let buffer = Buffer::scratch("unnamed");
 
         let buffers: Vec<Buffer> = vec![buffer.clone(), buffer.clone(), buffer.clone()];
@@ -85,10 +84,17 @@ impl Ui {
         frame.render_widget(top_bar, top_bar_rect);
 
         let bottom_bar_view = BottomBarView::default();
-        let mut bottom_bar_state = BottomBarState::new();
         let bottom_bar_area = self.state.layout_state().bottom_bar;
         let bottom_bar = BottomBar::new(&bottom_bar_view);
-        frame.render_stateful_widget(bottom_bar, bottom_bar_area, &mut bottom_bar_state);
+        frame.render_stateful_widget(
+            bottom_bar,
+            bottom_bar_area,
+            self.state.bottom_bar_state_mut(),
+        );
+    }
+
+    pub fn state_mut(&mut self) -> &mut UiState {
+        &mut self.state
     }
 }
 

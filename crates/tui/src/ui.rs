@@ -33,8 +33,20 @@ impl UiState {
     }
 
     /// Resizes layout state when screen size changes.
-    pub fn resize(&mut self, _new_screen_height: u16, _new_screen_width: u16) {
-        todo!()
+    pub fn resize(&mut self, new_screen_height: u16, new_screen_width: u16) {
+        let screen_rect = ratatui::layout::Rect {
+            x: 0,
+            y: 0,
+            height: new_screen_height,
+            width: new_screen_width,
+        };
+        if let Ok(layout_state) = crate::styles::layout::LayoutState::compute(
+            self.layout_state.plan,
+            screen_rect,
+        ) {
+            self.layout_state = layout_state;
+            self.screen_rect = screen_rect;
+        }
     }
 
     pub fn bottom_bar_state(&self) -> &BottomBarState {

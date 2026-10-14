@@ -9,7 +9,7 @@ use editor_core::{
     command::command::Command,
     input::{
         key::Key,
-        keymap::{default_keymap, Keymap},
+        keymap::{Keymap, default_keymap},
         mode::Mode,
         resolver::{ResolveResult, Resolver},
     },
@@ -106,6 +106,10 @@ impl App {
             }
         }
         Ok(())
+    }
+
+    pub fn set_mode(&mut self, mode: Mode) {
+        self.mode = mode;
     }
 }
 
