@@ -381,8 +381,17 @@ dependencies = [
  "color-eyre",
  "crossterm",
  "domain",
+ "editor-core",
+ "platform",
  "ratatui",
  "tui",
+]
+
+[[package]]
+name = "editor-core"
+version = "0.1.0"
+dependencies = [
+ "smallvec",
 ]
 
 [[package]]
@@ -1036,7 +1045,7 @@ name = "platform"
 version = "0.1.0"
 dependencies = [
  "crossterm",
- "editor",
+ "editor-core",
 ]
 
 [[package]]

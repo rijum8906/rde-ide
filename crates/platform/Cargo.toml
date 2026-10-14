@@ -8,6 +8,6 @@ rust-version.workspace = true
 
 [dependencies]
 # Internal Crates
-editor.workspace = true
+editor-core.workspace = true
 
 crossterm.workspace = true

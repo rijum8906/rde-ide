@@ -1,5 +1,5 @@
 use crossterm::event::{KeyCode as CtKeyCode, KeyEvent, KeyModifiers as CtModifiers};
-use editor::input::key::{Key, KeyCode, Modifiers};
+use editor_core::input::key::{Key, KeyCode, Modifiers};
 
 pub fn to_key(ev: KeyEvent) -> Option<Key> {
     let code = match ev.code {

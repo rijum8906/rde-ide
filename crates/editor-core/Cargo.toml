@@ -1,0 +1,10 @@
+[package]
+name = "editor-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+smallvec = "1.16.3"

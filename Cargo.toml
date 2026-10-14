@@ -4,6 +4,7 @@ members = [
   "apps/ide",
   "crates/domain",
   "crates/editor",
+  "crates/editor-core",
   "crates/platform",
   "crates/tui",
 ]
@@ -20,6 +21,7 @@ rust-version = "1.85.0"
 domain = { path = "crates/domain" }
 tui = { path = "crates/tui" }
 editor = { path = "crates/editor" }
+editor-core = { path = "crates/editor-core" }
 platform = { path = "crates/platform" }
 
 # Async & Concurrency

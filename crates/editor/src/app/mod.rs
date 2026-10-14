@@ -1,12 +1,23 @@
+pub mod execute;
 pub mod ui;
 
 use std::time::Duration;
 
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{self, Event};
 use domain::error::Result;
+use editor_core::{
+    command::command::Command,
+    input::{
+        key::Key,
+        keymap::{default_keymap, Keymap},
+        mode::Mode,
+        resolver::{ResolveResult, Resolver},
+    },
+};
+use platform::events::to_key;
 use ratatui::DefaultTerminal;
 
-use crate::{app::ui::Ui, input::mode::Mode};
+use crate::app::ui::Ui;
 
 pub struct App {
     // ========= UI =========
@@ -15,6 +26,10 @@ pub struct App {
     // ========= States ========
     is_running: bool,
     mode: Mode,
+
+    // ========= Handlers ==========
+    key_map: Keymap,
+    resolver: Resolver,
 }
 
 impl App {
@@ -26,6 +41,8 @@ impl App {
             ui,
             is_running: false,
             mode: Mode::Normal,
+            key_map: default_keymap(),
+            resolver: Resolver::new(),
         })
     }
 
@@ -39,7 +56,11 @@ impl App {
             // Poll for events with a timeout to allow frequent UI refreshes/animations
             if event::poll(Duration::from_millis(16))? {
                 match event::read()? {
-                    Event::Key(key) => self.handle_key_event(key),
+                    Event::Key(key_event) => {
+                        if let Some(key) = to_key(key_event) {
+                            self.handle_key(key)?;
+                        }
+                    }
                     Event::Resize(width, height) => {
                         self.ui.handle_resize(width, height);
                     }
@@ -50,15 +71,41 @@ impl App {
         Ok(())
     }
 
-    fn handle_key_event(&mut self, key: KeyEvent) {
-        // Quit on Esc or Ctrl+C
-        if key.code == KeyCode::Esc
-            || (key.modifiers.contains(KeyModifiers::CONTROL) && key.code == KeyCode::Char('c'))
-        {
-            self.is_running = false;
+    /// Feed one key. Called by the binary's event loop.
+    pub fn handle_key(&mut self, key: Key) -> Result<()> {
+        match self.resolver.feed(self.mode, key, &self.key_map) {
+            ResolveResult::Resolved(cmd) => self.execute(cmd)?,
+            ResolveResult::Pending => {}
+            ResolveResult::Unhandled(keys) => self.handle_unhandled(keys)?,
+            ResolveResult::Abandoned(_keys) => {
+                // Optional: beep, or set a status message.
+            }
         }
+        Ok(())
+    }
 
-        // TODO: apply proper logic
+    /// Called once per frame, before feeding keys. Expires stale prefixes.
+    pub fn tick(&mut self) -> Result<()> {
+        if let Some(cmd) = self.resolver.poll_timeout(std::time::Instant::now()) {
+            self.execute(cmd)?;
+        }
+        Ok(())
+    }
+
+    /// Fall-through for keys not bound in the keymap.
+    fn handle_unhandled(&mut self, keys: editor_core::input::resolver::Pending) -> Result<()> {
+        for key in keys {
+            if let editor_core::input::key::KeyCode::Char(c) = key.code {
+                if !key.modifiers.ctrl && !key.modifiers.alt {
+                    match self.mode {
+                        Mode::Insert => self.execute(Command::InsertChar(c))?,
+                        Mode::Command => self.execute(Command::CommandLinePush(c))?,
+                        _ => {}
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 }
 
