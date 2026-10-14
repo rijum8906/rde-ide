@@ -2,18 +2,12 @@
 //!
 //! This module provides the user interface components and functionality for the IDE project.
 
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use domain::{
     buffer::Buffer,
     error::{IdeError, Result},
 };
-use ratatui::{
-    DefaultTerminal, Frame,
-    layout::{Rect, VerticalAlignment::Top},
-};
-use std::time::Duration;
-
-use crate::{
+use ratatui::{DefaultTerminal, Frame, layout::Rect};
+use tui::{
     constant::{MIN_SCREEN_HEIGHT, MIN_SCREEN_WIDTH},
     state::ui::UiState,
     widgets::{screen_too_small::ScreenTooSmall, top_bar::TopBar},
@@ -21,7 +15,6 @@ use crate::{
 
 pub struct Ui {
     state: UiState,
-    is_running: bool,
 }
 
 impl Ui {
@@ -37,10 +30,7 @@ impl Ui {
         // Initialize UiState with dimensions
         let state = UiState::new(height, width)?;
 
-        Ok(Ui {
-            state,
-            is_running: true,
-        })
+        Ok(Ui { state })
     }
 
     /// Validates that the terminal meets minimum size requirements.
@@ -56,41 +46,16 @@ impl Ui {
         Ok(())
     }
 
-    /// Runs the main application loop, drawing the UI and handling events non-blockingly.
-    pub fn run(&mut self, terminal: &mut DefaultTerminal) -> std::io::Result<()> {
-        while self.is_running {
-            terminal.draw(|frame| self.render(frame))?;
-
-            // Poll for events with a timeout to allow frequent UI refreshes/animations
-            if event::poll(Duration::from_millis(16))? {
-                match event::read()? {
-                    Event::Key(key) => self.handle_key_event(key),
-                    Event::Resize(width, height) => {
-                        self.handle_resize(width, height);
-                    }
-                    _ => {}
-                }
-            }
-        }
+    pub fn draw(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
+        terminal.draw(|frame| self.render(frame))?;
         Ok(())
     }
 
-    fn handle_resize(&mut self, width: u16, height: u16) {
+    pub fn handle_resize(&mut self, width: u16, height: u16) {
         // Update layout state when dimensions meet minimum requirements
         if Self::validate_screen_size(height, width).is_ok() {
             self.state.resize(height, width);
         }
-    }
-
-    fn handle_key_event(&mut self, key: KeyEvent) {
-        // Quit on Esc or Ctrl+C
-        if key.code == KeyCode::Esc
-            || (key.modifiers.contains(KeyModifiers::CONTROL) && key.code == KeyCode::Char('c'))
-        {
-            self.is_running = false;
-        }
-
-        // TODO: apply proper logic
     }
 
     fn render(&self, frame: &mut Frame) {

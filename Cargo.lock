@@ -377,6 +377,13 @@ dependencies = [
 [[package]]
 name = "editor"
 version = "0.1.0"
+dependencies = [
+ "color-eyre",
+ "crossterm",
+ "domain",
+ "ratatui",
+ "tui",
+]
 
 [[package]]
 name = "either"
@@ -1204,6 +1211,7 @@ name = "rde-ide"
 version = "0.1.0"
 dependencies = [
  "domain",
+ "editor",
  "ratatui",
  "tokio",
  "tui",

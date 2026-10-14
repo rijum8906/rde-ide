@@ -7,3 +7,10 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+# Internal Crates
+tui.workspace = true
+domain.workspace = true
+
+crossterm.workspace = true
+ratatui.workspace = true
+color-eyre.workspace = true

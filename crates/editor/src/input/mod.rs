@@ -5,4 +5,4 @@
 pub mod key;
 pub mod keymap;
 pub mod mode;
-pub mod resover;
+pub mod resolver;

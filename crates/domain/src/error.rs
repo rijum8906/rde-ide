@@ -32,7 +32,7 @@ pub enum IdeError {
 
     /// Ui error
     #[error("Ui error: {0}")]
-    UiError(String),
+    AppError(String),
 
     /// Represents an error that occurs when the terminal screen size is too small.
     #[error(

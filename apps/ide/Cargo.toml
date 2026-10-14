@@ -10,6 +10,7 @@ rust-version.workspace = true
 # Internal Crates
 domain.workspace = true
 tui.workspace = true
+editor.workspace = true
 
 tokio.workspace = true
 ratatui.workspace = true

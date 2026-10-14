@@ -2,5 +2,6 @@
 //!
 //! Editor level stuffs like keybindings, commands will be managed from here
 
+pub mod app;
 pub mod command;
 pub mod input;

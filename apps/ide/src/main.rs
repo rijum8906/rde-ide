@@ -1,5 +1,5 @@
 use domain::error::{IdeError, Result};
-use tui::ui::Ui;
+use editor::app::App;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
@@ -7,16 +7,16 @@ async fn main() -> Result<()> {
     let mut terminal = ratatui::init();
 
     // Create UI instance
-    let mut ui = match Ui::new() {
+    let mut app = match App::new() {
         Ok(u) => u,
         Err(e) => {
             ratatui::restore();
-            return Err(IdeError::UiError(e.to_string()));
+            return Err(IdeError::AppError(e.to_string()));
         }
     };
 
     // Run application loop
-    let result = ui.run(&mut terminal);
+    let result = app.run(&mut terminal);
 
     // Restore terminal state safely on exit
     ratatui::restore();
