@@ -59,7 +59,7 @@ impl Ui {
         }
     }
 
-    fn render(&mut self, frame: &mut Frame) {
+    pub fn render(&mut self, frame: &mut Frame) {
         let area = frame.area();
 
         if let Err(IdeError::ScreenTooSmall {

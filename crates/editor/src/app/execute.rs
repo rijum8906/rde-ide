@@ -1,5 +1,5 @@
 use domain::error::Result;
-use editor_core::command::command::Command;
+use editor_core::{command::command::Command, input::mode::Mode};
 
 use crate::app::App;
 
@@ -12,6 +12,9 @@ impl App {
 
             Command::EnterMode(mode) => {
                 self.set_mode(mode);
+            }
+            Command::ExitToNormal => {
+                self.set_mode(Mode::Normal);
             }
             _ => {
                 // Other commands: implement as you go.
