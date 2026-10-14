@@ -2,5 +2,6 @@
 //!
 //! - wigets may also include states to manage them
 
+pub mod bottom_bar;
 pub mod screen_too_small;
 pub mod top_bar;
