@@ -14,6 +14,9 @@ pub enum IdeError {
     #[error("File not found: {0}")]
     FileNotFound(std::path::PathBuf),
 
+    #[error("Invalid utf8 in file {0}")]
+    InvalidUtf8(std::path::PathBuf),
+
     /// Represents an error that occurs when an underlying IO error happens.
     /// This automatically generates From<std::io::Error>
     #[error("IO error: {0}")]
