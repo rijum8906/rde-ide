@@ -5,7 +5,7 @@
 use crate::error::{IdeError, Result};
 
 /// contains everything
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PieceTable {}
 
 impl Default for PieceTable {

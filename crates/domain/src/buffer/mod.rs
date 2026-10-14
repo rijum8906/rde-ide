@@ -1,4 +1,6 @@
-//! Text buffer: a piece-table-backed document with save state and origin.
+//! Text Buffer
+//!
+//! A piece-table-backed document with save state and origin.
 
 use std::fs;
 use std::ops::Range;
@@ -32,7 +34,7 @@ pub enum SaveState {
 }
 
 /// A single document.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Buffer {
     piece_table: PieceTable,
     origin: Origin,

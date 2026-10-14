@@ -3,14 +3,20 @@
 //! This module provides the user interface components and functionality for the IDE project.
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
-use domain::error::{IdeError, Result};
-use ratatui::{DefaultTerminal, Frame, layout::Rect};
+use domain::{
+    buffer::Buffer,
+    error::{IdeError, Result},
+};
+use ratatui::{
+    DefaultTerminal, Frame,
+    layout::{Rect, VerticalAlignment::Top},
+};
 use std::time::Duration;
 
 use crate::{
     constant::{MIN_SCREEN_HEIGHT, MIN_SCREEN_WIDTH},
     state::ui::UiState,
-    widgets::screen_too_small::ScreenTooSmall,
+    widgets::{screen_too_small::ScreenTooSmall, top_bar::TopBar},
 };
 
 pub struct Ui {
@@ -104,15 +110,11 @@ impl Ui {
     }
 
     fn render_normal(&self, frame: &mut Frame, area: Rect) {
-        let layout_state = self.state.layout_state();
+        let buffer = Buffer::scratch("unnamed");
 
-        frame.render_widget(
-            format!(
-                "RDE IDE | Mode: {:?} | Press Esc to exit",
-                layout_state.layout_mode()
-            ),
-            area,
-        );
+        let buffers: Vec<Buffer> = vec![buffer.clone(), buffer.clone(), buffer.clone()];
+        let top_bar = TopBar::new(&buffers, 0);
+        frame.render_widget(top_bar, area);
     }
 }
 
