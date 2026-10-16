@@ -73,11 +73,15 @@ impl App {
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
         self.is_running = true;
 
-        let size = terminal.size().unwrap();
-        self.widget_geometry = WidgetGeometry::compute(Size {
-            height: size.height,
-            width: size.width,
-        });
+        if let Ok(size) = terminal.size() {
+            self.widget_geometry = WidgetGeometry::compute_with_layout(
+                Size {
+                    height: size.height,
+                    width: size.width,
+                },
+                &self.layout_states,
+            );
+        }
 
         while !self.should_quit() {
             if event::poll(Duration::from_millis(16))? {
@@ -87,7 +91,12 @@ impl App {
                             self.handle_key(key)?;
                         }
                     }
-                    Event::Resize(_, _) => {}
+                    Event::Resize(width, height) => {
+                        self.widget_geometry = WidgetGeometry::compute_with_layout(
+                            Size { width, height },
+                            &self.layout_states,
+                        );
+                    }
                     _ => {}
                 }
             }

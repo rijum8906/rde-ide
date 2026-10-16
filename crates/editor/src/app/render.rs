@@ -18,6 +18,7 @@ impl App {
         if let Err(e) = Self::validate_screen_size(area.height, area.width) {
             let screen_too_small = ScreenTooSmall::from_err(e);
             frame.render_widget(screen_too_small, area);
+            return;
         }
 
         // Step 2: Render UI
@@ -26,22 +27,26 @@ impl App {
 
     fn render_ui(&mut self, frame: &mut Frame) {
         // Step 1: calculate and resolve the geometry of the layout elements
-        let widget_geometry = WidgetGeometry::compute(Size::from(frame.area()));
+        self.widget_geometry = WidgetGeometry::compute_with_layout(
+            Size::from(frame.area()),
+            &self.layout_states,
+        );
 
-        // Step 2: render the layout
-        let top_bar_view = self.build_top_bar_view();
+        // Step 2: render the top bar
+        let top_bar_view = Self::build_top_bar_view(&self.workspace);
         let top_bar = TopBar::new(top_bar_view);
         frame.render_stateful_widget(
             top_bar,
-            widget_geometry.top_bar,
+            self.widget_geometry.top_bar,
             &mut self.widget_states.top_bar,
         );
 
+        // Step 3: render the bottom bar
         let bottom_bar_view = self.build_bottom_bar_view();
         let bottom_bar = BottomBar::new(&bottom_bar_view);
         frame.render_stateful_widget(
             bottom_bar,
-            widget_geometry.bottom_bar,
+            self.widget_geometry.bottom_bar,
             &mut self.widget_states.bottom_bar,
         );
     }

@@ -1,27 +1,22 @@
-use tui::{
-    state::bottom_bar::MessageKind,
-    viewmodel::{
-        bottom_bar::{BottomBarMode, BottomBarView},
-        top_bar::{TabView, TopBarView},
-    },
+use domain::workspace::state::WorkspaceState;
+use tui::viewmodel::{
+    bottom_bar::{BottomBarMode, BottomBarView},
+    top_bar::{TabView, TopBarView},
 };
 
 use crate::app::App;
 
 impl App {
-    /// Build the top-bar view model from current workspace state.
-    ///
-    /// `tabs` must outlive the returned view; the caller owns the Vec.
-    pub fn build_top_bar_view(&self) -> TopBarView {
-        let active = self.workspace.active_buffer_idx();
+    /// Build the top-bar view model from workspace state.
+    pub fn build_top_bar_view(workspace: &WorkspaceState) -> TopBarView<'_> {
+        let active = workspace.active_buffer_idx();
         TopBarView {
-            tabs: self
-                .workspace
+            tabs: workspace
                 .buffers()
                 .iter()
                 .enumerate()
                 .map(|(i, b)| TabView {
-                    title: b.display_name().to_string(),
+                    title: b.display_name(),
                     is_active: i == active,
                     is_dirty: b.is_dirty(),
                 })
@@ -29,19 +24,60 @@ impl App {
         }
     }
 
+    /// Convenience helper to build the top-bar view model.
+    pub fn top_bar_view(&self) -> TopBarView<'_> {
+        Self::build_top_bar_view(&self.workspace)
+    }
+
+    /// Build the bottom-bar view model derived from app and workspace state.
     pub fn build_bottom_bar_view(&self) -> BottomBarView {
+        let active_idx = self.workspace.active_buffer_idx();
+        let (file_name, is_dirty, line_count) = match self.workspace.buffers().get(active_idx) {
+            Some(buffer) => (
+                buffer.display_name().to_string(),
+                buffer.is_dirty(),
+                buffer.line_count().max(1),
+            ),
+            None => ("[No Name]".to_string(), false, 1),
+        };
+
         BottomBarView {
             mode: BottomBarMode::Status,
-            mode_label: self.mode.to_str(),
-            file_name: self.workspace.buffers()[self.workspace.active_buffer_idx()]
-                .display_name()
-                .to_string(),
-            is_dirty: false,
-            cursor: (0, 1),
-            line_count: 30,
-            message: Some("Hi".to_string()),
-            message_kind: Some(MessageKind::Info),
+            mode_label: self.mode.as_str(),
+            file_name,
+            is_dirty,
+            cursor: (1, 1),
+            line_count,
+            message: None,
+            message_kind: None,
             hint: None,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_build_bottom_bar_default_workspace() {
+        let app = App::new().unwrap();
+        let view = app.build_bottom_bar_view();
+        assert_eq!(view.file_name, "Unnamed");
+        assert_eq!(view.mode_label, "NORMAL");
+        assert_eq!(view.line_count, 1);
+        assert!(!view.is_dirty);
+    }
+
+    #[test]
+    fn test_build_bottom_bar_empty_workspace() {
+        let mut app = App::new().unwrap();
+        app.workspace.remove_buffer(0).unwrap();
+        // Should safely fallback without panicking
+        let view = app.build_bottom_bar_view();
+        assert_eq!(view.file_name, "[No Name]");
+        assert_eq!(view.mode_label, "NORMAL");
+        assert_eq!(view.line_count, 1);
+        assert!(!view.is_dirty);
     }
 }

@@ -15,18 +15,18 @@ const SEPARATOR: char = '│';
 
 /// Tab strip rendered by the top bar.
 #[derive(Debug)]
-pub struct TopBar {
-    view: TopBarView,
+pub struct TopBar<'a> {
+    view: TopBarView<'a>,
 }
 
-impl TopBar {
+impl<'a> TopBar<'a> {
     /// Construct the widget from its view model.
-    pub fn new(view: TopBarView) -> Self {
+    pub fn new(view: TopBarView<'a>) -> Self {
         Self { view }
     }
 }
 
-impl StatefulWidget for TopBar {
+impl StatefulWidget for TopBar<'_> {
     type State = TopBarState;
 
     fn render(self, area: Rect, buf: &mut Buffer, _state: &mut TopBarState) {
@@ -62,7 +62,7 @@ impl StatefulWidget for TopBar {
             x = write_char(buf, x, y, max_x, ' ', style);
 
             // Title.
-            x = write_str(buf, x, y, max_x, &tab.title, style);
+            x = write_str(buf, x, y, max_x, tab.title, style);
 
             // Right padding.
             x = write_char(buf, x, y, max_x, ' ', style);
@@ -84,7 +84,9 @@ fn write_char(buf: &mut Buffer, x: u16, y: u16, max_x: u16, ch: char, style: Sty
     if x >= max_x {
         return x;
     }
-    buf.get_mut(x, y).set_char(ch).set_style(style);
+    if let Some(cell) = buf.cell_mut((x, y)) {
+        cell.set_char(ch).set_style(style);
+    }
     x.saturating_add(1)
 }
 
@@ -94,7 +96,9 @@ fn write_str(buf: &mut Buffer, mut x: u16, y: u16, max_x: u16, s: &str, style: S
         if x >= max_x {
             break;
         }
-        buf.get_mut(x, y).set_char(ch).set_style(style);
+        if let Some(cell) = buf.cell_mut((x, y)) {
+            cell.set_char(ch).set_style(style);
+        }
         x = x.saturating_add(1);
     }
     x
@@ -104,7 +108,9 @@ fn write_str(buf: &mut Buffer, mut x: u16, y: u16, max_x: u16, s: &str, style: S
 fn fill_background(area: Rect, buf: &mut Buffer) {
     let max_x = area.x.saturating_add(area.width);
     for x in area.x..max_x {
-        buf.get_mut(x, area.y).set_style(bar_style());
+        if let Some(cell) = buf.cell_mut((x, area.y)) {
+            cell.set_style(bar_style());
+        }
     }
 }
 

@@ -93,7 +93,7 @@ fn render_status(view: &BottomBarView, area: Rect, buf: &mut RatBuffer) {
             write_str(buf, pos_x, y, max_x, &position_text, position_style());
         } else {
             // Fall back to inline if the bar is too narrow.
-            x = write_str(buf, x, y, max_x, &position_text, position_style());
+            let _ = write_str(buf, x, y, max_x, &position_text, position_style());
         }
     }
 
@@ -118,7 +118,7 @@ fn render_status(view: &BottomBarView, area: Rect, buf: &mut RatBuffer) {
 
 // --- Command-line mode ----------------------------------------------------
 
-fn render_command(view: &BottomBarView, area: Rect, buf: &mut RatBuffer, state: &BottomBarState) {
+fn render_command(_view: &BottomBarView, area: Rect, buf: &mut RatBuffer, state: &BottomBarState) {
     let y = area.y;
     let max_x = area.x.saturating_add(area.width);
     let mut x = area.x;
@@ -128,7 +128,7 @@ fn render_command(view: &BottomBarView, area: Rect, buf: &mut RatBuffer, state: 
 
     // Draw the command-line text.
     let text = &state.command_line;
-    x = write_str(buf, x, y, max_x, text, command_text_style());
+    let _ = write_str(buf, x, y, max_x, text, command_text_style());
 
     // Draw the cursor as a highlighted cell at the current cursor position.
     // Compute the screen x of the cursor from the char-count prefix.
@@ -141,9 +141,9 @@ fn render_command(view: &BottomBarView, area: Rect, buf: &mut RatBuffer, state: 
         // If the cursor is past the end of the text, draw a block cursor
         // on a space. Otherwise, invert the character at the cursor.
         let cursor_char = text.chars().nth(state.command_cursor).unwrap_or(' ');
-        buf.get_mut(cursor_x, y)
-            .set_char(cursor_char)
-            .set_style(command_cursor_style());
+        if let Some(cell) = buf.cell_mut((cursor_x, y)) {
+            cell.set_char(cursor_char).set_style(command_cursor_style());
+        }
     }
 
     // Fill the rest with the base command background.
@@ -164,7 +164,9 @@ fn write_str(buf: &mut RatBuffer, mut x: u16, y: u16, max_x: u16, s: &str, style
         if x >= max_x {
             break;
         }
-        buf.get_mut(x, y).set_char(ch).set_style(style);
+        if let Some(cell) = buf.cell_mut((x, y)) {
+            cell.set_char(ch).set_style(style);
+        }
         x = x.saturating_add(1);
     }
     x
@@ -173,7 +175,9 @@ fn write_str(buf: &mut RatBuffer, mut x: u16, y: u16, max_x: u16, s: &str, style
 fn fill_background(area: Rect, buf: &mut RatBuffer) {
     let max_x = area.x.saturating_add(area.width);
     for cx in area.x..max_x {
-        buf.get_mut(cx, area.y).set_style(base_style());
+        if let Some(cell) = buf.cell_mut((cx, area.y)) {
+            cell.set_style(base_style());
+        }
     }
 }
 
@@ -181,7 +185,9 @@ fn fill_background_from(area: Rect, buf: &mut RatBuffer, from_x: u16) {
     let max_x = area.x.saturating_add(area.width);
     let start = from_x.max(area.x);
     for cx in start..max_x {
-        buf.get_mut(cx, area.y).set_style(base_style());
+        if let Some(cell) = buf.cell_mut((cx, area.y)) {
+            cell.set_style(base_style());
+        }
     }
 }
 

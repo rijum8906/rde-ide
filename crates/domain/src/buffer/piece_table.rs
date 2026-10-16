@@ -38,10 +38,11 @@ impl PieceTable {
     }
 
     pub fn line_count(&self) -> usize {
-        todo!()
+        // Stub implementation: return 1 until full piece table line indexing is implemented
+        1
     }
 
     pub fn get_line_contents(&self, _idx: usize) -> Option<&str> {
-        todo!()
+        None
     }
 }
