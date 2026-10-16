@@ -4,6 +4,7 @@
 
 pub mod constant;
 pub mod layout;
+pub mod panel;
 pub mod state;
 pub mod viewmodel;
 pub mod widgets;

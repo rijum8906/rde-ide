@@ -1,10 +1,11 @@
 use domain::error::{IdeError, Result};
-use ratatui::Frame;
+use ratatui::{Frame, layout::Rect};
 use tui::{
-    constant::{MIN_SCREEN_HEIGHT, MIN_SCREEN_WIDTH},
+    constant::{BOTTOM_BAR_HEIGHT, MIN_SCREEN_HEIGHT, MIN_SCREEN_WIDTH, TOP_BAR_HEIGHT},
+    viewmodel::editor_panel::EditorPanelView,
     widgets::{
-        Size, WidgetGeometry, bottom_bar::BottomBar, left_panel::LeftPanel,
-        screen_too_small::ScreenTooSmall, top_bar::TopBar,
+        Size, WidgetGeometry, bottom_bar::BottomBar, editor_panel::EditorPanel,
+        left_panel::LeftPanel, screen_too_small::ScreenTooSmall, top_bar::TopBar,
     },
 };
 
@@ -26,9 +27,10 @@ impl App {
     }
 
     fn render_ui(&mut self, frame: &mut Frame) {
+        let screen_rect = frame.area();
         // Step 1: calculate and resolve the geometry of the layout elements
         self.widget_geometry =
-            WidgetGeometry::compute_with_layout(Size::from(frame.area()), &self.layout_states);
+            WidgetGeometry::compute_with_layout(Size::from(screen_rect), &self.layout_states);
 
         // Step 2: render the top bar
         let top_bar_view = Self::build_top_bar_view(&self.workspace);
@@ -48,13 +50,39 @@ impl App {
             &mut self.widget_states.bottom_bar,
         );
 
-        // Step 4: render left panel
-        let side_panel_view = self.build_side_panel();
-        let side_panel = LeftPanel::new(&side_panel_view);
+        // Step 4: render panels
+        let mut editor_panel_rect = Rect {
+            x: 0,
+            y: TOP_BAR_HEIGHT,
+            height: screen_rect.height - TOP_BAR_HEIGHT - BOTTOM_BAR_HEIGHT,
+            width: screen_rect.width,
+        };
+        // Case 1: if both left and right panel is opened
+        if self.layout_states.left_panel_open && self.layout_states.right_panel_open {
+            editor_panel_rect.width -=
+                self.widget_geometry.left_panel.width + self.widget_geometry.right_panel.width;
+            let left_panel_view = self.build_side_panel();
+            let left_panel = LeftPanel::new(&left_panel_view);
+            frame.render_stateful_widget(
+                left_panel,
+                self.widget_geometry.left_panel,
+                &mut self.widget_states.left_panel,
+            );
+        }
+        // Case 1: if only one panel is opened
+        else if self.layout_states.left_panel_open {
+            editor_panel_rect.width -= self.widget_geometry.left_panel.width;
+        } else if self.layout_states.right_panel_open {
+            editor_panel_rect.width -= self.widget_geometry.right_panel.width;
+        }
+
+        let editor_panel_view = self.build_editor_panel();
+        let editor_panel = EditorPanel::new(&editor_panel_view);
+        self.widget_geometry.editor_body = editor_panel_rect;
         frame.render_stateful_widget(
-            side_panel,
-            self.widget_geometry.left_panel,
-            &mut self.widget_states.left_panel,
+            editor_panel,
+            self.widget_geometry.editor_body,
+            &mut self.widget_states.editor_panel,
         );
     }
 

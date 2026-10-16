@@ -3,6 +3,7 @@
 //! - wigets may also include states to manage them
 
 pub mod bottom_bar;
+pub mod editor_panel;
 pub mod left_panel;
 pub mod screen_too_small;
 pub mod top_bar;
@@ -12,7 +13,10 @@ use ratatui::layout::Rect;
 use crate::{
     constant::{BOTTOM_BAR_HEIGHT, TOP_BAR_HEIGHT},
     layout::{LayoutMode, LayoutStates},
-    state::{bottom_bar::BottomBarState, left_panel::LeftPanelState, top_bar::TopBarState},
+    state::{
+        bottom_bar::BottomBarState, editor_panel::EditorState, left_panel::LeftPanelState,
+        top_bar::TopBarState,
+    },
 };
 
 /// Calculated bounding rectangles for each widget in the IDE interface.
@@ -31,6 +35,7 @@ pub struct WidgetStates {
     pub top_bar: TopBarState,
     pub bottom_bar: BottomBarState,
     pub left_panel: LeftPanelState,
+    pub editor_panel: EditorState,
 }
 
 /// Screen dimension abstraction.
@@ -140,6 +145,8 @@ impl WidgetGeometry {
 
 #[cfg(test)]
 mod tests {
+    use crate::panel::PanelType;
+
     use super::*;
 
     #[test]
@@ -176,6 +183,7 @@ mod tests {
         let layout = LayoutStates {
             mode: LayoutMode::FullScreen,
             left_panel_open: false,
+            focused_panel: PanelType::Editor,
             right_panel_open: false,
         };
         let geom = WidgetGeometry::compute_with_layout(size, &layout);
@@ -198,6 +206,7 @@ mod tests {
             mode: LayoutMode::Normal,
             left_panel_open: true,
             right_panel_open: true,
+            focused_panel: PanelType::Editor,
         };
         let geom = WidgetGeometry::compute_with_layout(size, &layout);
 

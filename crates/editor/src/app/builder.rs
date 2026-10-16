@@ -1,6 +1,8 @@
 use domain::workspace::{file_tree::scan_dir, state::WorkspaceState};
+use ratatui::symbols::line::NORMAL;
 use tui::viewmodel::{
     bottom_bar::{BottomBarMode, BottomBarView},
+    editor_panel::{EditorPanelView, LineView},
     left_panel::{LeftPanelView, RowView},
     top_bar::{TabView, TopBarView},
 };
@@ -68,6 +70,23 @@ impl App {
             title: "Left Panel".to_string(),
             is_loading: false,
             empty_message: Some("No file or folder to show".to_string()),
+        }
+    }
+
+    pub fn build_editor_panel(&self) -> EditorPanelView {
+        let default_line_view = LineView {
+            number: 1,
+            text: "Hi".to_string(),
+            is_current: true,
+            selection: None,
+        };
+        EditorPanelView {
+            lines: vec![default_line_view],
+            cursor_screen: Some((1, 1)),
+            gutter_width: 20,
+            is_focused: true,
+            highlight_current_line: true,
+            empty_message: None,
         }
     }
 }
