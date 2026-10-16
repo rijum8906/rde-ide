@@ -88,5 +88,3 @@ mod tests {
         assert!(!Command::EnterMode(Mode::Normal).should_quit());
     }
 }
-
-

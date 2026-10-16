@@ -11,13 +11,50 @@ pub mod top_bar;
 use ratatui::layout::Rect;
 
 use crate::{
-    constant::{BOTTOM_BAR_HEIGHT, TOP_BAR_HEIGHT},
     layout::{LayoutMode, LayoutStates},
     state::{
         bottom_bar::BottomBarState, editor_panel::EditorState, left_panel::LeftPanelState,
         top_bar::TopBarState,
     },
 };
+
+/// The width of the left panel
+pub const LEFT_PANEL_WIDTH: u16 = 25;
+/// The width of the right panel
+pub const RIGHT_PANEL_WIDTH: u16 = 25;
+pub const TOP_BAR_HEIGHT: u16 = 1;
+pub const BOTTOM_BAR_HEIGHT: u16 = 1;
+
+/// Returns the calcualted height of the panels
+/// e.g.(left_panel, right_panel, editor_panel)
+pub fn calc_panel_height(screen_height: u16) -> u16 {
+    screen_height - TOP_BAR_HEIGHT - BOTTOM_BAR_HEIGHT
+}
+
+/// Returns the calcualted width of the editor_panel
+/// i.e. after openning or closing of the side panels
+pub fn calc_editor_panel_width(screen_width: u16, layout_states: LayoutStates) -> u16 {
+    let mut res = screen_width;
+
+    if layout_states.left_panel_open {
+        res -= LEFT_PANEL_WIDTH;
+    }
+
+    if layout_states.right_panel_open {
+        res -= RIGHT_PANEL_WIDTH;
+    }
+
+    res
+}
+
+/// Calculates the x coordinate of the editor body
+pub fn calc_editor_panel_x(layout_states: LayoutStates) -> u16 {
+    if layout_states.left_panel_open {
+        LEFT_PANEL_WIDTH
+    } else {
+        0
+    }
+}
 
 /// Calculated bounding rectangles for each widget in the IDE interface.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -74,8 +111,8 @@ impl WidgetGeometry {
                 let top_height = TOP_BAR_HEIGHT.min(screen_size.height);
                 let bottom_height =
                     BOTTOM_BAR_HEIGHT.min(screen_size.height.saturating_sub(top_height));
-                let body_y = top_height;
-                let body_height = screen_size
+                let panel_y = top_height;
+                let panel_height = screen_size
                     .height
                     .saturating_sub(top_height)
                     .saturating_sub(bottom_height);
@@ -86,9 +123,9 @@ impl WidgetGeometry {
                 let left_panel_rect = if layout.left_panel_open {
                     Rect {
                         x: 0,
-                        y: body_y,
+                        y: panel_y,
                         width: side_panel_width,
-                        height: body_height,
+                        height: panel_height,
                     }
                 } else {
                     Rect::default()
@@ -97,9 +134,9 @@ impl WidgetGeometry {
                 let right_panel_rect = if layout.right_panel_open {
                     Rect {
                         x: screen_size.width.saturating_sub(side_panel_width),
-                        y: body_y,
+                        y: panel_y,
                         width: side_panel_width,
-                        height: body_height,
+                        height: panel_height,
                     }
                 } else {
                     Rect::default()
@@ -126,9 +163,9 @@ impl WidgetGeometry {
                     },
                     editor_body: Rect {
                         x: editor_x,
-                        y: body_y,
+                        y: panel_y,
                         width: editor_width,
-                        height: body_height,
+                        height: panel_height,
                     },
                     left_panel: left_panel_rect,
                     right_panel: right_panel_rect,
@@ -181,6 +218,7 @@ mod tests {
             height: 50,
         };
         let layout = LayoutStates {
+            screen_size: (80, 180),
             mode: LayoutMode::FullScreen,
             left_panel_open: false,
             focused_panel: PanelType::Editor,
@@ -203,6 +241,7 @@ mod tests {
             height: 50,
         };
         let layout = LayoutStates {
+            screen_size: (80, 180),
             mode: LayoutMode::Normal,
             left_panel_open: true,
             right_panel_open: true,

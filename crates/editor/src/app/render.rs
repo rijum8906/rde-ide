@@ -1,11 +1,11 @@
 use domain::error::{IdeError, Result};
-use ratatui::{Frame, layout::Rect};
+use ratatui::Frame;
 use tui::{
-    constant::{BOTTOM_BAR_HEIGHT, MIN_SCREEN_HEIGHT, MIN_SCREEN_WIDTH, TOP_BAR_HEIGHT},
-    viewmodel::editor_panel::EditorPanelView,
+    constant::{MIN_SCREEN_HEIGHT, MIN_SCREEN_WIDTH},
     widgets::{
-        Size, WidgetGeometry, bottom_bar::BottomBar, editor_panel::EditorPanel,
-        left_panel::LeftPanel, screen_too_small::ScreenTooSmall, top_bar::TopBar,
+        Size, WidgetGeometry, bottom_bar::BottomBar, calc_editor_panel_width, calc_editor_panel_x,
+        editor_panel::EditorPanel, left_panel::LeftPanel, screen_too_small::ScreenTooSmall,
+        top_bar::TopBar,
     },
 };
 
@@ -51,16 +51,7 @@ impl App {
         );
 
         // Step 4: render panels
-        let mut editor_panel_rect = Rect {
-            x: 0,
-            y: TOP_BAR_HEIGHT,
-            height: screen_rect.height - TOP_BAR_HEIGHT - BOTTOM_BAR_HEIGHT,
-            width: screen_rect.width,
-        };
-        // Case 1: if both left and right panel is opened
-        if self.layout_states.left_panel_open && self.layout_states.right_panel_open {
-            editor_panel_rect.width -=
-                self.widget_geometry.left_panel.width + self.widget_geometry.right_panel.width;
+        if self.layout_states.left_panel_open {
             let left_panel_view = self.build_side_panel();
             let left_panel = LeftPanel::new(&left_panel_view);
             frame.render_stateful_widget(
@@ -69,16 +60,15 @@ impl App {
                 &mut self.widget_states.left_panel,
             );
         }
-        // Case 1: if only one panel is opened
-        else if self.layout_states.left_panel_open {
-            editor_panel_rect.width -= self.widget_geometry.left_panel.width;
-        } else if self.layout_states.right_panel_open {
-            editor_panel_rect.width -= self.widget_geometry.right_panel.width;
+        if self.layout_states.right_panel_open {
+            // TODO: create the right panel and implement here
         }
 
+        self.widget_geometry.editor_body.width =
+            calc_editor_panel_width(screen_rect.width, self.layout_states);
+        self.widget_geometry.editor_body.x = calc_editor_panel_x(self.layout_states);
         let editor_panel_view = self.build_editor_panel();
         let editor_panel = EditorPanel::new(&editor_panel_view);
-        self.widget_geometry.editor_body = editor_panel_rect;
         frame.render_stateful_widget(
             editor_panel,
             self.widget_geometry.editor_body,

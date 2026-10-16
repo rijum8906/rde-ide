@@ -4,8 +4,10 @@
 //! binding is just a sequence of length 1.
 
 use std::collections::HashMap;
+use std::vec;
 
-use super::key::{Key, KeyCode};use super::mode::Mode;
+use super::key::{Key, KeyCode};
+use super::mode::Mode;
 use crate::command::command::{Command, Direction};
 
 /// A sequence of keys, e.g. `[g, g]` or `[Ctrl+w, Ctrl+w]`.
@@ -103,6 +105,11 @@ pub fn default_keymap() -> Keymap {
     km.bind(n, vec![Key::char('i')], Command::EnterMode(Mode::Insert));
     km.bind(n, vec![Key::char('v')], Command::EnterMode(Mode::Visual));
     km.bind(n, vec![Key::char(':')], Command::OpenCommandLine);
+    km.bind(
+        n,
+        vec![Key::char(' '), Key::char('e')],
+        Command::ToggleLeftPanel,
+    );
 
     // Cursor movement (hjkl + arrows)
     km.bind(
@@ -213,4 +220,3 @@ mod tests {
         );
     }
 }
-

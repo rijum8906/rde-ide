@@ -89,14 +89,12 @@ impl EditorPanel<'_> {
         );
         let style = gutter_style(line.is_current, self.view.is_focused);
 
-        let mut x = area.x;
         let max_gutter_x = area.x + gutter_width;
-        for ch in num_str.chars() {
+        for (x, ch) in (area.x..).zip(num_str.chars()) {
             if x >= max_gutter_x {
                 break;
             }
-            buf.get_mut(x, y).set_char(ch).set_style(style);
-            x += 1;
+            buf.cell_mut((x, y)).unwrap().set_char(ch).set_style(style);
         }
     }
 
@@ -114,7 +112,8 @@ impl EditorPanel<'_> {
         if self.view.highlight_current_line && line.is_current {
             let mut x = text_x;
             while x < max_x {
-                buf.get_mut(x, y)
+                buf.cell_mut((x, y))
+                    .unwrap()
                     .set_char(' ')
                     .set_style(current_line_style());
                 x += 1;
@@ -145,7 +144,7 @@ impl EditorPanel<'_> {
                 base_style
             };
 
-            buf.get_mut(x, y).set_char(ch).set_style(style);
+            buf.cell_mut((x, y)).unwrap().set_char(ch).set_style(style);
             x += 1;
             char_col += 1;
         }
@@ -166,7 +165,7 @@ impl EditorPanel<'_> {
             return;
         }
 
-        let cell = buf.get_mut(cursor_x, cursor_y);
+        let cell = buf.cell_mut((cursor_x, cursor_y)).unwrap();
         // Preserve the character under the cursor, override only the style.
         cell.set_style(cursor_style());
     }
@@ -182,14 +181,12 @@ impl EditorPanel<'_> {
         let start_x = area.x + area.width.saturating_sub(msg_width) / 2;
 
         let style = empty_message_style();
-        let mut x = start_x;
         let max_x = area.x + area.width;
-        for ch in msg.chars() {
+        for (x, ch) in (start_x..).zip(msg.chars()) {
             if x >= max_x {
                 break;
             }
-            buf.get_mut(x, y).set_char(ch).set_style(style);
-            x += 1;
+            buf.cell_mut((x, y)).unwrap().set_char(ch).set_style(style);
         }
     }
 }
@@ -201,7 +198,7 @@ fn fill_background(area: Rect, buf: &mut Buffer, focused: bool) {
     let max_x = area.x + area.width;
     for y in area.y..area.y + area.height {
         for x in area.x..max_x {
-            buf.get_mut(x, y).set_style(style);
+            buf.cell_mut((x, y)).unwrap().set_style(style);
         }
     }
 }

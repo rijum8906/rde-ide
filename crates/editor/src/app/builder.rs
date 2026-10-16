@@ -1,5 +1,4 @@
 use domain::workspace::{file_tree::scan_dir, state::WorkspaceState};
-use ratatui::symbols::line::NORMAL;
 use tui::viewmodel::{
     bottom_bar::{BottomBarMode, BottomBarView},
     editor_panel::{EditorPanelView, LineView},

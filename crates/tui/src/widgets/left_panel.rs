@@ -70,12 +70,12 @@ impl LeftPanel<'_> {
             if x >= max_x {
                 break;
             }
-            buf.get_mut(x, y).set_char(ch).set_style(style);
+            buf.cell_mut((x, y)).unwrap().set_char(ch).set_style(style);
             x += 1;
         }
         // Pad the rest of the row.
         while x < max_x {
-            buf.get_mut(x, y).set_char(' ').set_style(style);
+            buf.cell_mut((x, y)).unwrap().set_char(' ').set_style(style);
             x += 1;
         }
     }
@@ -146,13 +146,19 @@ impl LeftPanel<'_> {
                 if x >= max_x {
                     break;
                 }
-                buf.get_mut(x, y).set_char(ch).set_style(name_style);
+                buf.cell_mut((x, y))
+                    .unwrap()
+                    .set_char(ch)
+                    .set_style(name_style);
                 x += 1;
             }
 
             // Fill the rest of the row with the row's background.
             while x < max_x {
-                buf.get_mut(x, y).set_char(' ').set_style(row_bg_style(row));
+                buf.cell_mut((x, y))
+                    .unwrap()
+                    .set_char(' ')
+                    .set_style(row_bg_style(row));
                 x += 1;
             }
         }
@@ -168,12 +174,11 @@ impl LeftPanel<'_> {
         let start_x = area.x + area.width.saturating_sub(msg_width) / 2;
 
         let style = empty_message_style();
-        for (mut x, ch) in (start_x..).zip(msg.chars()) {
+        for (x, ch) in (start_x..).zip(msg.chars()) {
             if x >= max_x {
                 break;
             }
-            buf.get_mut(x, y).set_char(ch).set_style(style);
-            x += 1;
+            buf.cell_mut((x, y)).unwrap().set_char(ch).set_style(style);
         }
     }
 }
@@ -224,7 +229,7 @@ fn write_char(buf: &mut Buffer, x: u16, y: u16, max_x: u16, ch: char, style: Sty
     if x >= max_x {
         return x;
     }
-    buf.get_mut(x, y).set_char(ch).set_style(style);
+    buf.cell_mut((x, y)).unwrap().set_char(ch).set_style(style);
     x.saturating_add(1)
 }
 
@@ -232,7 +237,7 @@ fn fill_background(area: Rect, buf: &mut Buffer) {
     let max_x = area.x.saturating_add(area.width);
     for x in area.x..max_x {
         for y in area.y..area.y + area.height {
-            buf.get_mut(x, y).set_style(base_style());
+            buf.cell_mut((x, y)).unwrap().set_style(base_style());
         }
     }
 }

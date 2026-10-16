@@ -17,6 +17,26 @@ impl App {
             Command::CancelCommandLine | Command::ExitToNormal => {
                 self.set_mode(Mode::Normal);
             }
+            Command::ToggleLeftPanel => {
+                self.layout_states.left_panel_open = !self.layout_states.left_panel_open;
+            }
+            Command::MoveCursor(direction) => match direction {
+                editor_core::command::command::Direction::Up => {
+                    if self.widget_states.editor_panel.cursor_line != 0 {
+                        self.widget_states.editor_panel.move_up(1);
+                    }
+                }
+                editor_core::command::command::Direction::Down => {
+                    self.widget_states.editor_panel.move_down(1);
+                }
+
+                editor_core::command::command::Direction::Left => {
+                    self.widget_states.editor_panel.move_left();
+                }
+                editor_core::command::command::Direction::Right => {
+                    self.widget_states.editor_panel.move_right(1);
+                }
+            },
             _ => {
                 // Other commands: implement as you go.
             }
