@@ -1,48 +1,67 @@
+pub mod builder;
 pub mod execute;
-pub mod ui;
+pub mod render;
 
 use std::time::Duration;
 
 use crossterm::event::{self, Event};
-use domain::error::Result;
+use domain::{error::Result, workspace::state::WorkspaceState};
 use editor_core::{
     command::command::Command,
     input::{
         key::Key,
-        keymap::{Keymap, default_keymap},
+        keymap::Keymap,
         mode::Mode,
         resolver::{ResolveResult, Resolver},
     },
 };
 use platform::events::to_key;
 use ratatui::DefaultTerminal;
-
-use crate::app::ui::Ui;
+use tui::styles::layout::LayoutState;
 
 pub struct App {
-    // ========= UI =========
-    ui: Ui,
+    // ============================================================
+    // Domain — the documents being edited
+    // ============================================================
+    pub workspace: WorkspaceState,
 
-    // ========= States ========
-    is_running: bool,
-    mode: Mode,
+    // ============================================================
+    // Editor policy — how input is interpreted
+    // ============================================================
+    pub mode: Mode,
+    pub key_map: Keymap,
+    pub resolver: Resolver,
 
-    // ========= Handlers ==========
-    key_map: Keymap,
-    resolver: Resolver,
+    // ============================================================
+    // Layout policy — what the user wants to see
+    // ============================================================
+    pub layout_state: LayoutState,
+
+    // ============================================================
+    // Widget state — persistent per-widget data across frames
+    // ============================================================
+    // pub top_bar_state: TopBarState,
+    // pub editor_state: EditorState,
+    // pub bottom_bar_state: BottomBarState,
+
+    // ============================================================
+    // Lifecycle
+    // ============================================================
+    pub is_running: bool,
 }
 
 impl App {
+    // ===========================================================
+    // Core Lifestyle
+    // ===========================================================
     pub fn new() -> Result<Self> {
-        // Initialize the ui
-        let ui = Ui::new()?;
-
         Ok(Self {
-            ui,
-            is_running: false,
+            workspace: WorkspaceState::default(),
             mode: Mode::Normal,
-            key_map: default_keymap(),
+            key_map: Keymap::default(),
             resolver: Resolver::new(),
+            layout_state: LayoutState::default(),
+            is_running: false,
         })
     }
 
@@ -50,26 +69,38 @@ impl App {
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
         self.is_running = true;
 
-        while self.is_running {
-            self.ui.draw(terminal)?;
-
-            // Poll for events with a timeout to allow frequent UI refreshes/animations
+        while !self.should_quit() {
             if event::poll(Duration::from_millis(16))? {
                 match event::read()? {
-                    Event::Key(key_event) => {
-                        if let Some(key) = to_key(key_event) {
+                    Event::Key(ke) => {
+                        if let Some(key) = to_key(ke) {
                             self.handle_key(key)?;
                         }
                     }
-                    Event::Resize(width, height) => {
-                        self.ui.handle_resize(width, height);
-                    }
+                    Event::Resize(_, _) => {}
                     _ => {}
                 }
             }
+
+            if self.should_quit() {
+                break;
+            }
+
+            self.tick()?;
+
+            terminal.draw(|frame| self.render_into(frame))?;
         }
+
         Ok(())
     }
+
+    pub fn should_quit(&self) -> bool {
+        !self.is_running
+    }
+
+    // ===========================================================
+    // Input Handling
+    // ===========================================================
 
     /// Feed one key. Called by the binary's event loop.
     pub fn handle_key(&mut self, key: Key) -> Result<()> {
@@ -78,7 +109,7 @@ impl App {
             ResolveResult::Pending => {}
             ResolveResult::Unhandled(keys) => self.handle_unhandled(keys)?,
             ResolveResult::Abandoned(_keys) => {
-                // Optional: beep, or set a status message.
+                // TODO: beep, or set a status message.
             }
         }
         Ok(())
@@ -108,21 +139,65 @@ impl App {
         Ok(())
     }
 
+    // ===========================================================
+    // Setter and Getter
+    // ===========================================================
+
     pub fn set_mode(&mut self, mode: Mode) {
         self.mode = mode;
-    }
-}
-
-impl App {
-    pub fn ui(&self) -> &Ui {
-        &self.ui
-    }
-
-    pub fn is_running(&self) -> bool {
-        self.is_running
     }
 
     pub fn mode(&self) -> Mode {
         self.mode
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use editor_core::input::key::KeyCode;
+
+    #[test]
+    fn test_app_should_quit() {
+        let mut app = App::new().unwrap();
+        // Initially, is_running is false, so should_quit is true
+        assert!(app.should_quit());
+
+        // When running, should_quit is false
+        app.is_running = true;
+        assert!(!app.should_quit());
+
+        // Quitting sets is_running to false, so should_quit becomes true
+        app.execute(Command::Quit).unwrap();
+        assert!(!app.is_running);
+        assert!(app.should_quit());
+    }
+
+    #[test]
+    fn test_handle_escape_quits() {
+        let mut app = App::new().unwrap();
+        app.is_running = true;
+        app.handle_key(Key::plain(KeyCode::Escape)).unwrap();
+        assert!(!app.is_running);
+        assert!(app.should_quit());
+    }
+
+    #[test]
+    fn test_handle_ctrl_q_force_quits() {
+        let mut app = App::new().unwrap();
+        app.is_running = true;
+        app.handle_key(Key::ctrl('q')).unwrap();
+        assert!(!app.is_running);
+        assert!(app.should_quit());
+    }
+
+    #[test]
+    fn test_handle_ctrl_c_force_quits() {
+        let mut app = App::new().unwrap();
+        app.is_running = true;
+        app.handle_key(Key::ctrl('c')).unwrap();
+        assert!(!app.is_running);
+        assert!(app.should_quit());
+    }
+}
+

@@ -12,15 +12,29 @@ use crate::command::command::{Command, Direction};
 pub type KeySeq = Vec<Key>;
 
 /// A keymap: bindings organized by mode.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Keymap {
     /// mode -> full sequence -> command
     bindings: HashMap<Mode, HashMap<KeySeq, Command>>,
 }
 
+impl Default for Keymap {
+    fn default() -> Self {
+        default_keymap()
+    }
+}
+
 impl Keymap {
+    /// Construct a keymap with default bindings.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Construct an empty keymap with no bindings.
+    pub fn empty() -> Self {
+        Self {
+            bindings: HashMap::new(),
+        }
     }
 
     pub fn bind(&mut self, mode: Mode, seq: impl Into<KeySeq>, cmd: Command) {
@@ -63,7 +77,7 @@ impl Keymap {
 /// Bindings are grouped by mode. Add new ones here; consumers can layer
 /// overrides on top via `Keymap::bind`.
 pub fn default_keymap() -> Keymap {
-    let mut km = Keymap::new();
+    let mut km = Keymap::empty();
 
     // --- Normal mode ----------------------------------------------------
     let n = Mode::Normal;
@@ -165,3 +179,38 @@ pub fn default_keymap() -> Keymap {
 
     km
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_keymap_bindings() {
+        let km = Keymap::default();
+        // Esc binds to Quit
+        assert_eq!(
+            km.lookup(Mode::Normal, &[Key::plain(KeyCode::Escape)]),
+            Some(&Command::Quit)
+        );
+        // Ctrl+q binds to ForceQuit
+        assert_eq!(
+            km.lookup(Mode::Normal, &[Key::ctrl('q')]),
+            Some(&Command::ForceQuit)
+        );
+        // Ctrl+c binds to ForceQuit
+        assert_eq!(
+            km.lookup(Mode::Normal, &[Key::ctrl('c')]),
+            Some(&Command::ForceQuit)
+        );
+    }
+
+    #[test]
+    fn test_empty_keymap() {
+        let km = Keymap::empty();
+        assert_eq!(
+            km.lookup(Mode::Normal, &[Key::plain(KeyCode::Escape)]),
+            None
+        );
+    }
+}
+

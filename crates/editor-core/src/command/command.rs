@@ -59,3 +59,34 @@ pub enum Direction {
     Left,
     Right,
 }
+
+impl Command {
+    /// Returns true if this command represents a quit action (`Quit` or `ForceQuit`).
+    pub fn should_quit(&self) -> bool {
+        matches!(self, Self::Quit | Self::ForceQuit)
+    }
+
+    /// Alias for `should_quit`.
+    pub fn is_quit(&self) -> bool {
+        self.should_quit()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_command_should_quit() {
+        assert!(Command::Quit.should_quit());
+        assert!(Command::ForceQuit.should_quit());
+        assert!(Command::Quit.is_quit());
+        assert!(Command::ForceQuit.is_quit());
+
+        assert!(!Command::SaveBuffer.should_quit());
+        assert!(!Command::NextTab.should_quit());
+        assert!(!Command::EnterMode(Mode::Normal).should_quit());
+    }
+}
+
+

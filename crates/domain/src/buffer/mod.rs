@@ -41,6 +41,18 @@ pub struct Buffer {
     save_state: SaveState,
 }
 
+impl Default for Buffer {
+    fn default() -> Self {
+        Self {
+            piece_table: PieceTable::new(),
+            origin: Origin::Scratch {
+                name: "Unnamed".to_string(),
+            },
+            save_state: SaveState::NeverSaved,
+        }
+    }
+}
+
 impl Buffer {
     // --- Constructors -----------------------------------------------------
 
@@ -67,7 +79,10 @@ impl Buffer {
     /// would memory-map or stream, but this is correct and simple.
     pub fn open_file(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
-        let bytes = fs::read(path).map_err(|_| IdeError::FileNotFound(path.to_path_buf()))?;
+        let bytes = fs::read(path).map_err(|_| {
+            // TODO: show debug message
+            IdeError::CannotReadFile(path.to_path_buf())
+        })?;
 
         let contents =
             String::from_utf8(bytes).map_err(|_| IdeError::InvalidUtf8(path.to_path_buf()))?;

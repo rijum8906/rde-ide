@@ -14,6 +14,14 @@ pub enum IdeError {
     #[error("File not found: {0}")]
     FileNotFound(std::path::PathBuf),
 
+    /// The requested path does not exist.
+    #[error("Path not found: {0}")]
+    PathNotFound(std::path::PathBuf),
+
+    /// The file could not be read.
+    #[error("Cannot read: {0}")]
+    CannotReadFile(std::path::PathBuf),
+
     #[error("Invalid utf8 in file {0}")]
     InvalidUtf8(std::path::PathBuf),
 
