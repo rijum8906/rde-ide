@@ -9,7 +9,7 @@ use std::path::PathBuf;
 
 /// Side-panel state.
 #[derive(Debug, Default)]
-pub struct SidePanelState {
+pub struct LeftPanelState {
     /// Directories whose children are visible, identified by absolute path.
     /// Paths, not indices, so the set survives tree changes.
     pub expanded: HashSet<PathBuf>,
@@ -22,7 +22,7 @@ pub struct SidePanelState {
     pub scroll_y: usize,
 }
 
-impl SidePanelState {
+impl LeftPanelState {
     pub fn new() -> Self {
         Self::default()
     }

@@ -2,5 +2,5 @@
 //! It will define the structures and logic needed to maintain and update the UI state, such as current buffer, cursor position, and mode.
 
 pub mod bottom_bar;
-pub mod side_panel;
+pub mod left_panel;
 pub mod top_bar;

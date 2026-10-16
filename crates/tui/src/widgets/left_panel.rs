@@ -4,12 +4,13 @@ use ratatui::{
     buffer::Buffer,
     layout::Rect,
     style::{Color, Modifier, Style},
-    text::{Line, Span},
-    widgets::{StatefulWidget, Widget},
+    widgets::StatefulWidget,
 };
 
-use crate::state::side_panel::SidePanelState;
-use crate::viewmodel::side_panel::{RowView, SidePanelView};
+use crate::{
+    state::left_panel::LeftPanelState,
+    viewmodel::left_panel::{LeftPanelView, RowView},
+};
 
 const INDENT_PER_LEVEL: u16 = 2;
 const DIR_EXPANDED: &str = "▾ ";
@@ -18,20 +19,20 @@ const FILE_PREFIX: &str = "  ";
 
 /// Side-panel widget.
 #[derive(Debug)]
-pub struct SidePanel<'a> {
-    view: &'a SidePanelView,
+pub struct LeftPanel<'a> {
+    view: &'a LeftPanelView,
 }
 
-impl<'a> SidePanel<'a> {
-    pub fn new(view: &'a SidePanelView) -> Self {
+impl<'a> LeftPanel<'a> {
+    pub fn new(view: &'a LeftPanelView) -> Self {
         Self { view }
     }
 }
 
-impl StatefulWidget for SidePanel<'_> {
-    type State = SidePanelState;
+impl StatefulWidget for LeftPanel<'_> {
+    type State = LeftPanelState;
 
-    fn render(self, area: Rect, buf: &mut Buffer, state: &mut SidePanelState) {
+    fn render(self, area: Rect, buf: &mut Buffer, state: &mut LeftPanelState) {
         if area.width == 0 || area.height == 0 {
             return;
         }
@@ -57,7 +58,7 @@ impl StatefulWidget for SidePanel<'_> {
     }
 }
 
-impl SidePanel<'_> {
+impl LeftPanel<'_> {
     fn render_title(&self, area: Rect, buf: &mut Buffer) {
         let y = area.y;
         let max_x = area.x + area.width;
@@ -79,7 +80,7 @@ impl SidePanel<'_> {
         }
     }
 
-    fn render_rows(&self, area: Rect, buf: &mut Buffer, state: &mut SidePanelState, _unused: u16) {
+    fn render_rows(&self, area: Rect, buf: &mut Buffer, state: &mut LeftPanelState, _unused: u16) {
         // 1. Loading state.
         if self.view.is_loading {
             self.render_centered_message("Loading…", area, buf);
@@ -167,8 +168,7 @@ impl SidePanel<'_> {
         let start_x = area.x + area.width.saturating_sub(msg_width) / 2;
 
         let style = empty_message_style();
-        let mut x = start_x;
-        for ch in msg.chars() {
+        for (mut x, ch) in (start_x..).zip(msg.chars()) {
             if x >= max_x {
                 break;
             }

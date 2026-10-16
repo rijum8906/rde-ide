@@ -18,7 +18,7 @@ pub struct RowView {
 
 /// Everything the side panel needs to render.
 #[derive(Debug, Clone)]
-pub struct SidePanelView {
+pub struct LeftPanelView {
     pub rows: Vec<RowView>,
     /// Title to display at the top of the panel (e.g. root directory name).
     pub title: String,
@@ -28,7 +28,7 @@ pub struct SidePanelView {
     pub empty_message: Option<String>,
 }
 
-impl SidePanelView {
+impl LeftPanelView {
     /// Construct an empty view (used while loading, or on scan failure).
     pub fn empty(title: impl Into<String>) -> Self {
         Self {

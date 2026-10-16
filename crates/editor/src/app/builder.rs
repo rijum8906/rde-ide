@@ -1,7 +1,7 @@
 use domain::workspace::{file_tree::scan_dir, state::WorkspaceState};
 use tui::viewmodel::{
     bottom_bar::{BottomBarMode, BottomBarView},
-    side_panel::{RowView, SidePanelView},
+    left_panel::{LeftPanelView, RowView},
     top_bar::{TabView, TopBarView},
 };
 
@@ -50,7 +50,7 @@ impl App {
         }
     }
 
-    pub fn build_side_panel(&self) -> SidePanelView {
+    pub fn build_side_panel(&self) -> LeftPanelView {
         let file_tree_nodes = scan_dir(self.workspace.root_dir()).unwrap();
         let rows: Vec<RowView> = file_tree_nodes
             .iter()
@@ -63,11 +63,11 @@ impl App {
             })
             .collect();
 
-        SidePanelView {
+        LeftPanelView {
             rows,
-            title: "Fuck".to_string(),
+            title: "Left Panel".to_string(),
             is_loading: false,
-            empty_message: Some("Besi kore Fuck".to_string()),
+            empty_message: Some("No file or folder to show".to_string()),
         }
     }
 }

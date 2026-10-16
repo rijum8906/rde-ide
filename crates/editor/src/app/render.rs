@@ -3,8 +3,8 @@ use ratatui::Frame;
 use tui::{
     constant::{MIN_SCREEN_HEIGHT, MIN_SCREEN_WIDTH},
     widgets::{
-        Size, WidgetGeometry, bottom_bar::BottomBar, screen_too_small::ScreenTooSmall,
-        side_panel::SidePanel, top_bar::TopBar,
+        Size, WidgetGeometry, bottom_bar::BottomBar, left_panel::LeftPanel,
+        screen_too_small::ScreenTooSmall, top_bar::TopBar,
     },
 };
 
@@ -50,7 +50,7 @@ impl App {
 
         // Step 4: render left panel
         let side_panel_view = self.build_side_panel();
-        let side_panel = SidePanel::new(&side_panel_view);
+        let side_panel = LeftPanel::new(&side_panel_view);
         frame.render_stateful_widget(
             side_panel,
             self.widget_geometry.left_panel,
