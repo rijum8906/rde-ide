@@ -17,7 +17,10 @@ use editor_core::{
 };
 use platform::events::to_key;
 use ratatui::DefaultTerminal;
-use tui::styles::layout::LayoutState;
+use tui::{
+    layout::LayoutStates,
+    widgets::{Size, WidgetGeometry, WidgetStates},
+};
 
 pub struct App {
     // ============================================================
@@ -35,14 +38,13 @@ pub struct App {
     // ============================================================
     // Layout policy — what the user wants to see
     // ============================================================
-    pub layout_state: LayoutState,
+    pub layout_states: LayoutStates,
 
     // ============================================================
     // Widget state — persistent per-widget data across frames
     // ============================================================
-    // pub top_bar_state: TopBarState,
-    // pub editor_state: EditorState,
-    // pub bottom_bar_state: BottomBarState,
+    pub widget_geometry: WidgetGeometry,
+    pub widget_states: WidgetStates,
 
     // ============================================================
     // Lifecycle
@@ -60,7 +62,9 @@ impl App {
             mode: Mode::Normal,
             key_map: Keymap::default(),
             resolver: Resolver::new(),
-            layout_state: LayoutState::default(),
+            layout_states: LayoutStates::default(),
+            widget_geometry: WidgetGeometry::default(),
+            widget_states: WidgetStates::default(),
             is_running: false,
         })
     }
@@ -68,6 +72,12 @@ impl App {
     /// Runs the main application loop, drawing the UI and handling events non-blockingly.
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
         self.is_running = true;
+
+        let size = terminal.size().unwrap();
+        self.widget_geometry = WidgetGeometry::compute(Size {
+            height: size.height,
+            width: size.width,
+        });
 
         while !self.should_quit() {
             if event::poll(Duration::from_millis(16))? {
@@ -200,4 +210,3 @@ mod tests {
         assert!(app.should_quit());
     }
 }
-

@@ -15,18 +15,18 @@ const SEPARATOR: char = '│';
 
 /// Tab strip rendered by the top bar.
 #[derive(Debug)]
-pub struct TopBar<'a> {
-    view: &'a TopBarView<'a>,
+pub struct TopBar {
+    view: TopBarView,
 }
 
-impl<'a> TopBar<'a> {
+impl TopBar {
     /// Construct the widget from its view model.
-    pub fn new(view: &'a TopBarView<'a>) -> Self {
+    pub fn new(view: TopBarView) -> Self {
         Self { view }
     }
 }
 
-impl StatefulWidget for TopBar<'_> {
+impl StatefulWidget for TopBar {
     type State = TopBarState;
 
     fn render(self, area: Rect, buf: &mut Buffer, _state: &mut TopBarState) {
@@ -62,7 +62,7 @@ impl StatefulWidget for TopBar<'_> {
             x = write_char(buf, x, y, max_x, ' ', style);
 
             // Title.
-            x = write_str(buf, x, y, max_x, tab.title, style);
+            x = write_str(buf, x, y, max_x, &tab.title, style);
 
             // Right padding.
             x = write_char(buf, x, y, max_x, ' ', style);
@@ -110,10 +110,12 @@ fn fill_background(area: Rect, buf: &mut Buffer) {
 
 // --- styles ---
 
+/// Background style shared by every part of the bar.
 fn bar_style() -> Style {
     Style::default().fg(Color::Reset).bg(Color::Rgb(30, 30, 30))
 }
 
+/// Style for the tab the user is currently working in.
 fn active_tab_style() -> Style {
     Style::default()
         .fg(Color::Black)
@@ -121,18 +123,21 @@ fn active_tab_style() -> Style {
         .add_modifier(Modifier::BOLD)
 }
 
+/// Style used by all inactive tabs.
 fn inactive_tab_style() -> Style {
     Style::default()
         .fg(Color::Rgb(160, 160, 160))
         .bg(Color::Rgb(30, 30, 30))
 }
 
+/// Style used for the separator between two adjacent tabs.
 fn separator_style() -> Style {
     Style::default()
         .fg(Color::Rgb(80, 80, 80))
         .bg(Color::Rgb(30, 30, 30))
 }
 
+/// Style used to mark tabs with unsaved changes.
 fn dirty_style() -> Style {
     Style::default()
         .fg(Color::Rgb(230, 180, 80))

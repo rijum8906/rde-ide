@@ -69,6 +69,7 @@ impl WorkspaceState {
         }
         // Case 2: if it's a dir
         else if path_buf.is_dir() {
+            // TODO: need to display all the files and folders in the left panel
             Ok(Self {
                 buffers: vec![],
                 active_buffer_idx: 0,
