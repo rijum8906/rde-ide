@@ -4,6 +4,7 @@
 
 pub mod bottom_bar;
 pub mod screen_too_small;
+pub mod side_panel;
 pub mod top_bar;
 
 use ratatui::layout::Rect;
@@ -11,7 +12,7 @@ use ratatui::layout::Rect;
 use crate::{
     constant::{BOTTOM_BAR_HEIGHT, TOP_BAR_HEIGHT},
     layout::{LayoutMode, LayoutStates},
-    state::{bottom_bar::BottomBarState, top_bar::TopBarState},
+    state::{bottom_bar::BottomBarState, side_panel::SidePanelState, top_bar::TopBarState},
 };
 
 /// Calculated bounding rectangles for each widget in the IDE interface.
@@ -29,6 +30,7 @@ pub struct WidgetGeometry {
 pub struct WidgetStates {
     pub top_bar: TopBarState,
     pub bottom_bar: BottomBarState,
+    pub left_panel: SidePanelState,
 }
 
 /// Screen dimension abstraction.

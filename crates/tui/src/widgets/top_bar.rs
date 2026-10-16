@@ -16,12 +16,12 @@ const SEPARATOR: char = '│';
 /// Tab strip rendered by the top bar.
 #[derive(Debug)]
 pub struct TopBar<'a> {
-    view: TopBarView<'a>,
+    view: &'a TopBarView<'a>,
 }
 
 impl<'a> TopBar<'a> {
     /// Construct the widget from its view model.
-    pub fn new(view: TopBarView<'a>) -> Self {
+    pub fn new(view: &'a TopBarView<'a>) -> Self {
         Self { view }
     }
 }

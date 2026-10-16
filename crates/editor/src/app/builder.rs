@@ -1,6 +1,7 @@
-use domain::workspace::state::WorkspaceState;
+use domain::workspace::{file_tree::scan_dir, state::WorkspaceState};
 use tui::viewmodel::{
     bottom_bar::{BottomBarMode, BottomBarView},
+    side_panel::{RowView, SidePanelView},
     top_bar::{TabView, TopBarView},
 };
 
@@ -22,11 +23,6 @@ impl App {
                 })
                 .collect(),
         }
-    }
-
-    /// Convenience helper to build the top-bar view model.
-    pub fn top_bar_view(&self) -> TopBarView<'_> {
-        Self::build_top_bar_view(&self.workspace)
     }
 
     /// Build the bottom-bar view model derived from app and workspace state.
@@ -51,6 +47,27 @@ impl App {
             message: None,
             message_kind: None,
             hint: None,
+        }
+    }
+
+    pub fn build_side_panel(&self) -> SidePanelView {
+        let file_tree_nodes = scan_dir(self.workspace.root_dir()).unwrap();
+        let rows: Vec<RowView> = file_tree_nodes
+            .iter()
+            .map(|file_tree_node| RowView {
+                name: file_tree_node.name.clone(),
+                depth: 1,
+                is_dir: file_tree_node.is_dir,
+                is_expanded: false,
+                is_selected: false,
+            })
+            .collect();
+
+        SidePanelView {
+            rows,
+            title: "Fuck".to_string(),
+            is_loading: false,
+            empty_message: Some("Besi kore Fuck".to_string()),
         }
     }
 }

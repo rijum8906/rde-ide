@@ -4,7 +4,7 @@ use tui::{
     constant::{MIN_SCREEN_HEIGHT, MIN_SCREEN_WIDTH},
     widgets::{
         Size, WidgetGeometry, bottom_bar::BottomBar, screen_too_small::ScreenTooSmall,
-        top_bar::TopBar,
+        side_panel::SidePanel, top_bar::TopBar,
     },
 };
 
@@ -27,14 +27,12 @@ impl App {
 
     fn render_ui(&mut self, frame: &mut Frame) {
         // Step 1: calculate and resolve the geometry of the layout elements
-        self.widget_geometry = WidgetGeometry::compute_with_layout(
-            Size::from(frame.area()),
-            &self.layout_states,
-        );
+        self.widget_geometry =
+            WidgetGeometry::compute_with_layout(Size::from(frame.area()), &self.layout_states);
 
         // Step 2: render the top bar
         let top_bar_view = Self::build_top_bar_view(&self.workspace);
-        let top_bar = TopBar::new(top_bar_view);
+        let top_bar = TopBar::new(&top_bar_view);
         frame.render_stateful_widget(
             top_bar,
             self.widget_geometry.top_bar,
@@ -48,6 +46,15 @@ impl App {
             bottom_bar,
             self.widget_geometry.bottom_bar,
             &mut self.widget_states.bottom_bar,
+        );
+
+        // Step 4: render left panel
+        let side_panel_view = self.build_side_panel();
+        let side_panel = SidePanel::new(&side_panel_view);
+        frame.render_stateful_widget(
+            side_panel,
+            self.widget_geometry.left_panel,
+            &mut self.widget_states.left_panel,
         );
     }
 

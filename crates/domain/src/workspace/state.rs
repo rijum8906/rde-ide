@@ -22,16 +22,21 @@ pub struct WorkspaceState {
     /// The source of truth for which buffer receives input; always
     /// checked against the length of `buffers` before use.
     active_buffer_idx: usize,
+
+    /// Root directory of the project / workspace.
+    root_dir: std::path::PathBuf,
 }
 
 impl Default for WorkspaceState {
     fn default() -> Self {
         // create a default buffer
         let buffer = Buffer::default();
+        let root_dir = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
 
         Self {
             buffers: vec![buffer],
             active_buffer_idx: 0,
+            root_dir,
         }
     }
 }
@@ -61,18 +66,23 @@ impl WorkspaceState {
         }
         // Case 1: if it's a file
         if path_buf.is_file() {
+            let root_dir = path_buf
+                .parent()
+                .unwrap_or_else(|| Path::new("."))
+                .to_path_buf();
             let buffer = Buffer::open_file(path)?;
             Ok(Self {
                 buffers: vec![buffer],
                 active_buffer_idx: 0,
+                root_dir,
             })
         }
         // Case 2: if it's a dir
         else if path_buf.is_dir() {
-            // TODO: need to display all the files and folders in the left panel
             Ok(Self {
                 buffers: vec![],
                 active_buffer_idx: 0,
+                root_dir: path_buf,
             })
         } else {
             Err(IdeError::CannotReadFile(path_buf))
@@ -128,5 +138,28 @@ impl WorkspaceState {
     /// The index of the buffer the user is currently working in.
     pub fn active_buffer_idx(&self) -> usize {
         self.active_buffer_idx
+    }
+
+    /// Root directory of this workspace.
+    pub fn root_dir(&self) -> &Path {
+        &self.root_dir
+    }
+
+    /// Update the workspace root directory.
+    pub fn set_root_dir(&mut self, root_dir: impl Into<std::path::PathBuf>) {
+        self.root_dir = root_dir.into();
+    }
+
+    /// Open a file at `path` into workspace buffers. If already open, focuses it.
+    pub fn open_file(&mut self, path: impl AsRef<Path>) -> Result<()> {
+        let path = path.as_ref();
+        if let Some(pos) = self.buffers.iter().position(|b| b.path() == Some(path)) {
+            self.active_buffer_idx = pos;
+            return Ok(());
+        }
+        let buf = Buffer::open_file(path)?;
+        self.buffers.push(buf);
+        self.active_buffer_idx = self.buffers.len().saturating_sub(1);
+        Ok(())
     }
 }

@@ -99,9 +99,7 @@ impl Resolver {
     ///
     /// Call this once per frame, before feeding new keys.
     pub fn poll_timeout(&mut self, now: Instant) -> Option<Command> {
-        let Some(since) = self.pending_since else {
-            return None;
-        };
+        let since = self.pending_since?;
         if now.duration_since(since) < PREFIX_TIMEOUT {
             return None;
         }
