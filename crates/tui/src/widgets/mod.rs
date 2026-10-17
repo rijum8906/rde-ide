@@ -208,7 +208,9 @@ mod tests {
             geom.editor_body.height,
             size.height - TOP_BAR_HEIGHT - BOTTOM_BAR_HEIGHT
         );
-        assert_eq!(geom.editor_body.width, size.width);
+        assert_eq!(geom.left_panel.width, 20);
+        assert_eq!(geom.editor_body.x, geom.left_panel.width);
+        assert_eq!(geom.editor_body.width, size.width - geom.left_panel.width);
     }
 
     #[test]

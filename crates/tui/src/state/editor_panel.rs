@@ -79,6 +79,7 @@ impl EditorState {
         if self.cursor_line + 1 < self.line_count {
             self.cursor_line += 1;
         }
+
         self.cursor_col = self.cursor_col.min(line_len);
     }
 

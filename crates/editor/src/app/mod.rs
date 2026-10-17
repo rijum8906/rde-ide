@@ -5,7 +5,7 @@ pub mod render;
 use std::time::Duration;
 
 use crossterm::event::{self, Event};
-use domain::{error::Result, workspace::state::WorkspaceState};
+use domain::{error::Result, workspace::WorkspaceState};
 use editor_core::{
     command::command::Command,
     input::{
@@ -58,7 +58,9 @@ impl App {
     // ===========================================================
     pub fn new() -> Result<Self> {
         Ok(Self {
-            workspace: WorkspaceState::default(),
+            workspace: WorkspaceState::from_path(
+                "/home/rijum/Projects/rde-ide/apps/ide/src/main.rs",
+            )?,
             mode: Mode::Normal,
             key_map: Keymap::default(),
             resolver: Resolver::new(),
@@ -146,7 +148,10 @@ impl App {
     fn handle_unhandled(&mut self, keys: editor_core::input::resolver::Pending) -> Result<()> {
         for key in keys {
             if let editor_core::input::key::KeyCode::Char(c) = key.code {
-                if !key.modifiers.ctrl && !key.modifiers.alt {
+                if !key
+                    .modifiers
+                    .intersects(crossterm::event::KeyModifiers::CONTROL | crossterm::event::KeyModifiers::ALT)
+                {
                     match self.mode {
                         Mode::Insert => self.execute(Command::InsertChar(c))?,
                         Mode::Command => self.execute(Command::CommandLinePush(c))?,
@@ -174,7 +179,7 @@ impl App {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use editor_core::input::key::KeyCode;
+    use editor_core::input::key::{KeyCode, KeyExt};
 
     #[test]
     fn test_app_should_quit() {
@@ -196,7 +201,7 @@ mod tests {
     fn test_handle_escape_quits() {
         let mut app = App::new().unwrap();
         app.is_running = true;
-        app.handle_key(Key::plain(KeyCode::Escape)).unwrap();
+        app.handle_key(Key::plain(KeyCode::Esc)).unwrap();
         assert!(!app.is_running);
         assert!(app.should_quit());
     }

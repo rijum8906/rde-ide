@@ -7,4 +7,6 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+crossterm.workspace = true
 smallvec = "1.16.3"
+

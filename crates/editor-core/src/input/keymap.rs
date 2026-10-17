@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 use std::vec;
 
-use super::key::{Key, KeyCode};
+use super::key::{Key, KeyCode, KeyExt};
 use super::mode::Mode;
 use crate::command::command::{Command, Direction};
 
@@ -85,7 +85,7 @@ pub fn default_keymap() -> Keymap {
     let n = Mode::Normal;
 
     // Quit
-    km.bind(n, vec![Key::plain(KeyCode::Escape)], Command::Quit);
+    km.bind(n, vec![Key::plain(KeyCode::Esc)], Command::Quit);
     km.bind(n, vec![Key::ctrl('q')], Command::ForceQuit);
     km.bind(n, vec![Key::ctrl('c')], Command::ForceQuit);
 
@@ -155,12 +155,13 @@ pub fn default_keymap() -> Keymap {
         vec![Key::char('g'), Key::char('g')],
         Command::MoveToFileStart,
     );
-    // Multi-key: `dd` deletes a line (stub for later)
-    // km.bind(n, vec![Key::char('d'), Key::char('d')], Command::DeleteLine);
+    km.bind(n, vec![Key::char('G')], Command::MoveToFileEnd);
+    km.bind(n, vec![Key::char('$')], Command::MoveToLineEnd);
+    km.bind(n, vec![Key::char('0')], Command::MoveToLineStart);
 
     // --- Insert mode ----------------------------------------------------
     let i = Mode::Insert;
-    km.bind(i, vec![Key::plain(KeyCode::Escape)], Command::ExitToNormal);
+    km.bind(i, vec![Key::plain(KeyCode::Esc)], Command::ExitToNormal);
     km.bind(i, vec![Key::plain(KeyCode::Enter)], Command::InsertNewline);
     km.bind(i, vec![Key::plain(KeyCode::Backspace)], Command::Backspace);
     // Printable chars handled by fall-through in the resolver, not bound here.
@@ -169,7 +170,7 @@ pub fn default_keymap() -> Keymap {
     let c = Mode::Command;
     km.bind(
         c,
-        vec![Key::plain(KeyCode::Escape)],
+        vec![Key::plain(KeyCode::Esc)],
         Command::CancelCommandLine,
     );
     km.bind(
@@ -196,7 +197,7 @@ mod tests {
         let km = Keymap::default();
         // Esc binds to Quit
         assert_eq!(
-            km.lookup(Mode::Normal, &[Key::plain(KeyCode::Escape)]),
+            km.lookup(Mode::Normal, &[Key::plain(KeyCode::Esc)]),
             Some(&Command::Quit)
         );
         // Ctrl+q binds to ForceQuit
@@ -214,9 +215,6 @@ mod tests {
     #[test]
     fn test_empty_keymap() {
         let km = Keymap::empty();
-        assert_eq!(
-            km.lookup(Mode::Normal, &[Key::plain(KeyCode::Escape)]),
-            None
-        );
+        assert_eq!(km.lookup(Mode::Normal, &[Key::plain(KeyCode::Esc)]), None);
     }
 }

@@ -1,132 +1,160 @@
-//! Backend-agnostic key representation.
+//! Crossterm key re-exports and input helpers.
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Key {
-    pub code: KeyCode,
-    pub modifiers: Modifiers,
+pub use crossterm::event::{
+    KeyCode, KeyEvent, KeyEvent as Key, KeyEventKind, KeyEventState, KeyModifiers,
+    KeyModifiers as Modifiers,
+};
+
+/// Helper to create a plain key event with no modifiers.
+pub const fn plain(code: KeyCode) -> KeyEvent {
+    KeyEvent {
+        code,
+        modifiers: KeyModifiers::NONE,
+        kind: KeyEventKind::Press,
+        state: KeyEventState::empty(),
+    }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum KeyCode {
-    Char(char),
-    Enter,
-    Escape,
-    Tab,
-    BackTab,
-    Backspace,
-    Delete,
-    Insert,
-    Home,
-    End,
-    PageUp,
-    PageDown,
-    Up,
-    Down,
-    Left,
-    Right,
-    F(u8),
-    Null,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub struct Modifiers {
-    pub ctrl: bool,
-    pub alt: bool,
-    pub shift: bool,
-}
-
-impl Modifiers {
-    pub const NONE: Self = Self {
-        ctrl: false,
-        alt: false,
-        shift: false,
+/// Helper to create a char key event.
+/// Automatically adds SHIFT if the character is uppercase.
+pub const fn char(c: char) -> KeyEvent {
+    let modifiers = if c.is_uppercase() {
+        KeyModifiers::SHIFT
+    } else {
+        KeyModifiers::NONE
     };
-    pub const CTRL: Self = Self {
-        ctrl: true,
-        alt: false,
-        shift: false,
-    };
-    pub const ALT: Self = Self {
-        ctrl: false,
-        alt: true,
-        shift: false,
-    };
-    pub const SHIFT: Self = Self {
-        ctrl: false,
-        alt: false,
-        shift: true,
-    };
-}
-
-impl Key {
-    /// Convenience constructor for plain characters.
-    pub const fn char(c: char) -> Self {
-        Self {
-            code: KeyCode::Char(c),
-            modifiers: Modifiers::NONE,
-        }
-    }
-
-    pub const fn ctrl(c: char) -> Self {
-        Self {
-            code: KeyCode::Char(c),
-            modifiers: Modifiers::CTRL,
-        }
-    }
-
-    pub const fn plain(code: KeyCode) -> Self {
-        Self {
-            code,
-            modifiers: Modifiers::NONE,
-        }
-    }
-
-    /// A sentinel that can never be produced by a terminal.
-    /// Used internally for buffer initialization.
-    pub const fn none() -> Self {
-        Self {
-            code: KeyCode::Null,
-            modifiers: Modifiers::NONE,
-        }
-    }
-
-    pub const fn is_none(&self) -> bool {
-        matches!(self.code, KeyCode::Null)
+    KeyEvent {
+        code: KeyCode::Char(c),
+        modifiers,
+        kind: KeyEventKind::Press,
+        state: KeyEventState::empty(),
     }
 }
 
-// Readable Debug: prints `C-w`, `Esc`, `a`, `S-Tab`, etc.
-impl std::fmt::Display for Key {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.modifiers.ctrl {
-            write!(f, "C-")?;
-        }
-        if self.modifiers.alt {
-            write!(f, "M-")?;
-        }
-        if self.modifiers.shift {
-            write!(f, "S-")?;
-        }
-        match self.code {
-            KeyCode::Char(' ') => write!(f, "Space"),
-            KeyCode::Char(c) => write!(f, "{c}"),
-            KeyCode::Enter => write!(f, "Enter"),
-            KeyCode::Escape => write!(f, "Esc"),
-            KeyCode::Tab => write!(f, "Tab"),
-            KeyCode::BackTab => write!(f, "BackTab"),
-            KeyCode::Backspace => write!(f, "BS"),
-            KeyCode::Delete => write!(f, "Del"),
-            KeyCode::Insert => write!(f, "Ins"),
-            KeyCode::Home => write!(f, "Home"),
-            KeyCode::End => write!(f, "End"),
-            KeyCode::PageUp => write!(f, "PgUp"),
-            KeyCode::PageDown => write!(f, "PgDn"),
-            KeyCode::Up => write!(f, "Up"),
-            KeyCode::Down => write!(f, "Down"),
-            KeyCode::Left => write!(f, "Left"),
-            KeyCode::Right => write!(f, "Right"),
-            KeyCode::F(n) => write!(f, "F{n}"),
-            KeyCode::Null => write!(f, "Nul"),
-        }
+/// Helper to create a Ctrl+<char> key event.
+pub const fn ctrl(c: char) -> KeyEvent {
+    KeyEvent {
+        code: KeyCode::Char(c),
+        modifiers: KeyModifiers::CONTROL,
+        kind: KeyEventKind::Press,
+        state: KeyEventState::empty(),
+    }
+}
+
+/// Helper to create a Shift+<char> key event.
+pub const fn shift(c: char) -> KeyEvent {
+    KeyEvent {
+        code: KeyCode::Char(c),
+        modifiers: KeyModifiers::SHIFT,
+        kind: KeyEventKind::Press,
+        state: KeyEventState::empty(),
+    }
+}
+
+/// Helper to create an Alt+<char> key event.
+pub const fn alt(c: char) -> KeyEvent {
+    KeyEvent {
+        code: KeyCode::Char(c),
+        modifiers: KeyModifiers::ALT,
+        kind: KeyEventKind::Press,
+        state: KeyEventState::empty(),
+    }
+}
+
+/// Extension trait providing associated constructor functions and helpers on `Key`/`KeyEvent`.
+pub trait KeyExt {
+    fn plain(code: KeyCode) -> Self;
+    fn char(c: char) -> Self;
+    fn ctrl(c: char) -> Self;
+    fn shift(c: char) -> Self;
+    fn alt(c: char) -> Self;
+    fn is_ctrl(&self) -> bool;
+    fn is_alt(&self) -> bool;
+    fn is_shift(&self) -> bool;
+}
+
+impl KeyExt for KeyEvent {
+    fn plain(code: KeyCode) -> Self {
+        plain(code)
+    }
+
+    fn char(c: char) -> Self {
+        char(c)
+    }
+
+    fn ctrl(c: char) -> Self {
+        ctrl(c)
+    }
+
+    fn shift(c: char) -> Self {
+        shift(c)
+    }
+
+    fn alt(c: char) -> Self {
+        alt(c)
+    }
+
+    fn is_ctrl(&self) -> bool {
+        self.modifiers.contains(KeyModifiers::CONTROL)
+    }
+
+    fn is_alt(&self) -> bool {
+        self.modifiers.contains(KeyModifiers::ALT)
+    }
+
+    fn is_shift(&self) -> bool {
+        self.modifiers.contains(KeyModifiers::SHIFT)
+    }
+}
+
+#[cfg(test)]
+
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_plain_key() {
+        let k = plain(KeyCode::Enter);
+        assert_eq!(k.code, KeyCode::Enter);
+        assert_eq!(k.modifiers, KeyModifiers::NONE);
+        assert_eq!(k.kind, KeyEventKind::Press);
+    }
+
+    #[test]
+    fn test_char_key_case() {
+        let lower = char('a');
+        assert_eq!(lower.code, KeyCode::Char('a'));
+        assert_eq!(lower.modifiers, KeyModifiers::NONE);
+
+        let upper = char('A');
+        assert_eq!(upper.code, KeyCode::Char('A'));
+        assert_eq!(upper.modifiers, KeyModifiers::SHIFT);
+        assert!(upper.is_shift());
+    }
+
+    #[test]
+    fn test_ctrl_alt_shift() {
+        let c = ctrl('c');
+        assert_eq!(c.code, KeyCode::Char('c'));
+        assert_eq!(c.modifiers, KeyModifiers::CONTROL);
+        assert!(c.is_ctrl());
+        assert!(!c.is_alt());
+
+        let a = alt('x');
+        assert_eq!(a.code, KeyCode::Char('x'));
+        assert_eq!(a.modifiers, KeyModifiers::ALT);
+        assert!(a.is_alt());
+        assert!(!a.is_ctrl());
+    }
+
+    #[test]
+    fn test_key_ext_associated_functions() {
+        let k = Key::plain(KeyCode::Esc);
+        assert_eq!(k.code, KeyCode::Esc);
+        assert_eq!(k.modifiers, KeyModifiers::NONE);
+
+        let k2 = Key::ctrl('q');
+        assert_eq!(k2.code, KeyCode::Char('q'));
+        assert!(k2.is_ctrl());
     }
 }

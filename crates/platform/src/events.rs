@@ -1,34 +1,48 @@
-use crossterm::event::{KeyCode as CtKeyCode, KeyEvent, KeyModifiers as CtModifiers};
-use editor_core::input::key::{Key, KeyCode, Modifiers};
+use crossterm::event::{KeyEvent, KeyEventKind};
+use editor_core::input::key::Key;
 
 pub fn to_key(ev: KeyEvent) -> Option<Key> {
-    let code = match ev.code {
-        CtKeyCode::Char(c) => KeyCode::Char(c),
-        CtKeyCode::Enter => KeyCode::Enter,
-        CtKeyCode::Esc => KeyCode::Escape,
-        CtKeyCode::Tab => KeyCode::Tab,
-        CtKeyCode::BackTab => KeyCode::BackTab,
-        CtKeyCode::Backspace => KeyCode::Backspace,
-        CtKeyCode::Delete => KeyCode::Delete,
-        CtKeyCode::Insert => KeyCode::Insert,
-        CtKeyCode::Home => KeyCode::Home,
-        CtKeyCode::End => KeyCode::End,
-        CtKeyCode::PageUp => KeyCode::PageUp,
-        CtKeyCode::PageDown => KeyCode::PageDown,
-        CtKeyCode::Up => KeyCode::Up,
-        CtKeyCode::Down => KeyCode::Down,
-        CtKeyCode::Left => KeyCode::Left,
-        CtKeyCode::Right => KeyCode::Right,
-        CtKeyCode::F(n) => KeyCode::F(n),
-        CtKeyCode::Null => KeyCode::Null,
-        _ => return None,
-    };
+    if ev.kind == KeyEventKind::Release {
+        return None;
+    }
 
-    let modifiers = Modifiers {
-        ctrl: ev.modifiers.contains(CtModifiers::CONTROL),
-        alt: ev.modifiers.contains(CtModifiers::ALT),
-        shift: ev.modifiers.contains(CtModifiers::SHIFT),
-    };
-
-    Some(Key { code, modifiers })
+    Some(ev)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crossterm::event::{KeyCode, KeyEventState, KeyModifiers};
+
+    #[test]
+    fn test_to_key_press_and_repeat() {
+        let press = KeyEvent {
+            code: KeyCode::Char('a'),
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::empty(),
+        };
+        assert_eq!(to_key(press), Some(press));
+
+        let repeat = KeyEvent {
+            code: KeyCode::Char('a'),
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Repeat,
+            state: KeyEventState::empty(),
+        };
+        assert_eq!(to_key(repeat), Some(repeat));
+    }
+
+    #[test]
+    fn test_to_key_ignores_release() {
+        let release = KeyEvent {
+            code: KeyCode::Char('a'),
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Release,
+            state: KeyEventState::empty(),
+        };
+        assert_eq!(to_key(release), None);
+    }
+}
+
+

@@ -1,4 +1,4 @@
-use domain::workspace::{file_tree::scan_dir, state::WorkspaceState};
+use domain::workspace::{WorkspaceState, file_tree::scan_dir};
 use tui::viewmodel::{
     bottom_bar::{BottomBarMode, BottomBarView},
     editor_panel::{EditorPanelView, LineView},
@@ -52,7 +52,7 @@ impl App {
     }
 
     pub fn build_side_panel(&self) -> LeftPanelView {
-        let file_tree_nodes = scan_dir(self.workspace.root_dir()).unwrap();
+        let file_tree_nodes = scan_dir(self.workspace.root_dir()).unwrap_or_default();
         let rows: Vec<RowView> = file_tree_nodes
             .iter()
             .map(|file_tree_node| RowView {
@@ -72,17 +72,31 @@ impl App {
         }
     }
 
-    pub fn build_editor_panel(&self) -> EditorPanelView {
-        let default_line_view = LineView {
-            number: 1,
-            text: "Hi".to_string(),
-            is_current: true,
-            selection: None,
+    pub fn build_editor_panel(&mut self) -> EditorPanelView {
+        let Some(buffer) = self.workspace.active_buffer() else {
+            return EditorPanelView::empty();
         };
+
+        // NOTE: at each frame the we need to update the line count
+        self.widget_states.editor_panel.line_count = buffer.line_count();
+
+        let mut line_views = vec![];
+        for i in 0..buffer.line_count() {
+            line_views.push(LineView {
+                number: i + 1,
+                text: buffer.line(i).unwrap(),
+                is_current: i == self.widget_states.editor_panel.cursor_line,
+                selection: None,
+            });
+        }
+
         EditorPanelView {
-            lines: vec![default_line_view],
-            cursor_screen: Some((1, 1)),
-            gutter_width: 20,
+            lines: line_views,
+            cursor_screen: Some((
+                self.widget_states.editor_panel.cursor_line as u16,
+                self.widget_states.editor_panel.cursor_col as u16,
+            )),
+            gutter_width: 5,
             is_focused: true,
             highlight_current_line: true,
             empty_message: None,
@@ -114,5 +128,17 @@ mod tests {
         assert_eq!(view.mode_label, "NORMAL");
         assert_eq!(view.line_count, 1);
         assert!(!view.is_dirty);
+    }
+
+    #[test]
+    fn test_build_editor_panel_empty_workspace() {
+        let mut app = App::new().unwrap();
+        app.workspace = WorkspaceState::from_path(std::env::temp_dir()).unwrap();
+
+        let view = app.build_editor_panel();
+
+        assert!(view.is_empty());
+        assert_eq!(view.empty_message.as_deref(), Some("(no buffer)"));
+        assert!(view.cursor_screen.is_none());
     }
 }

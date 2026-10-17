@@ -3,9 +3,8 @@ use ratatui::Frame;
 use tui::{
     constant::{MIN_SCREEN_HEIGHT, MIN_SCREEN_WIDTH},
     widgets::{
-        Size, WidgetGeometry, bottom_bar::BottomBar, calc_editor_panel_width, calc_editor_panel_x,
-        editor_panel::EditorPanel, left_panel::LeftPanel, screen_too_small::ScreenTooSmall,
-        top_bar::TopBar,
+        Size, WidgetGeometry, bottom_bar::BottomBar, editor_panel::EditorPanel,
+        left_panel::LeftPanel, screen_too_small::ScreenTooSmall, top_bar::TopBar,
     },
 };
 
@@ -64,9 +63,6 @@ impl App {
             // TODO: create the right panel and implement here
         }
 
-        self.widget_geometry.editor_body.width =
-            calc_editor_panel_width(screen_rect.width, self.layout_states);
-        self.widget_geometry.editor_body.x = calc_editor_panel_x(self.layout_states);
         let editor_panel_view = self.build_editor_panel();
         let editor_panel = EditorPanel::new(&editor_panel_view);
         frame.render_stateful_widget(

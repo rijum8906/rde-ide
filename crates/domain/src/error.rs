@@ -3,6 +3,8 @@
 //! This module defines the error types used throughout the project.
 //! It provides a unified way to handle errors and propagate them through the application.
 
+use std::path::PathBuf;
+
 /// The unified error type for the IDE project.
 ///
 /// Use `IdeError` to represent errors that can occur in the IDE.
@@ -29,6 +31,9 @@ pub enum IdeError {
     /// This automatically generates From<std::io::Error>
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
+
+    #[error("IO error: {0}")]
+    DomainError(#[from] DomainError),
 
     /// Represents an error that occurs when a network request fails.
     #[error("Network error: {0}")]
@@ -57,6 +62,67 @@ pub enum IdeError {
     #[error("Unknown error: {0}")]
     UnknownError(String),
 }
+
+#[derive(Debug, thiserror::Error)]
+pub enum DomainError {
+    // --- Paths ---
+    #[error("path does not exist: {path}")]
+    PathNotFound { path: PathBuf },
+
+    #[error("path is neither a file nor a directory: {path}")]
+    UnsupportedPath { path: PathBuf },
+
+    // --- File I/O ---
+    #[error("cannot read file '{path}': {source}")]
+    CannotReadFile {
+        path: PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
+
+    #[error("cannot write file '{path}': {source}")]
+    CannotWriteFile {
+        path: PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
+
+    #[error("cannot rename '{from}' to '{to}': {source}")]
+    CannotRename {
+        from: PathBuf,
+        to: PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
+
+    #[error("file '{path}' contains invalid UTF-8")]
+    InvalidUtf8 { path: PathBuf },
+
+    #[error("buffer has no associated path")]
+    NoPath,
+
+    // --- Buffer / piece-table ---
+    #[error("offset {offset} is out of bounds (buffer length is {len})")]
+    OffsetOutOfBounds { offset: usize, len: usize },
+
+    #[error("offset {offset} is not on a UTF-8 char boundary")]
+    NotCharBoundary { offset: usize },
+
+    #[error("invalid range: start ({start}) exceeds end ({end})")]
+    InvalidRange { start: usize, end: usize },
+
+    // --- Workspace ---
+    #[error("no buffer at index {index} (workspace has {count} buffers)")]
+    NoSuchBuffer { index: usize, count: usize },
+
+    #[error("cannot close the last buffer")]
+    LastBuffer,
+
+    #[error("no active buffer")]
+    NoActiveBuffer,
+}
+
+pub type DomainResult<T> = std::result::Result<T, DomainError>;
 
 /// A type alias for `Result<T, IdeError>`.
 pub type Result<T> = std::result::Result<T, IdeError>;
