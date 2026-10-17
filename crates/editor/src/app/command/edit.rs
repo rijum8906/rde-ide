@@ -5,7 +5,7 @@ use crate::app::{
     App,
     execute::{
         edit::delete_line,
-        text::{calculate_byte_offset, delete, insert_char, insert_new_line},
+        text::{delete, insert_char, insert_new_line},
     },
 };
 

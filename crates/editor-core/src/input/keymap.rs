@@ -251,17 +251,17 @@ mod tests {
     fn test_insert_mode_ctrl_j_and_ctrl_b() {
         let km = Keymap::default();
         assert_eq!(
-            km.lookup(Mode::Insert, &[Key::ctrl('b')]),
+            km.lookup(Mode::Normal, &[Key::ctrl('b')]),
             Some(&Command::Layout(ToggleLeftPanel))
         );
         assert_eq!(
             km.lookup(Mode::Insert, &[Key::ctrl('j')]),
-            Some(&Command::Mode(Enter(Mode::Normal)))
+            Some(&Command::Mode(ExitToNormal))
         );
         // Also verify case insensitivity with Key::ctrl('J')
         assert_eq!(
             km.lookup(Mode::Insert, &[Key::ctrl('J')]),
-            Some(&Command::Mode(Enter(Mode::Normal)))
+            Some(&Command::Mode(ExitToNormal))
         );
     }
 }

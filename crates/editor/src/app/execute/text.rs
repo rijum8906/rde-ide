@@ -33,54 +33,36 @@ pub fn insert_new_line(workspace: &mut WorkspaceState, widget_states: &mut Widge
     }
 }
 
-pub fn calculate_byte_offset(
-    workspace: &mut WorkspaceState,
-    ws: &mut WidgetStates,
-) -> DomainResult<usize> {
-    if let Some(buffer) = workspace.active_buffer_mut() {
-        let mut char_offset = 0;
-
-        // Accumulate characters and newlines from all lines above the cursor
-        for i in 0..ws.editor_panel.cursor_line {
-            char_offset += buffer.line_char_len(i) + 1;
-        }
-
-        // Add horizontal column offset within the current line
-        char_offset += ws.editor_panel.cursor_col;
-
-        // Convert the logical character offset into a absolute byte offset
-        let byte_offset = buffer.char_to_byte_offset(char_offset);
-        return Ok(byte_offset);
-    }
-
-    Err(DomainError::NoActiveBuffer)
+/// Computes the linear character offset in the document for the cursor position.
+pub fn cursor_char_offset(
+    buffer: &domain::buffer::Buffer,
+    cursor_line: usize,
+    cursor_col: usize,
+) -> usize {
+    buffer
+        .line_range(cursor_line)
+        .map(|r| r.start + cursor_col)
+        .unwrap_or(cursor_col)
 }
 
 /// Core helper function that handles inserting any character into the active buffer.
 ///
 /// # How coordinate translation works:
-/// 1. **2D to 1D Character Offset**: To find where the cursor points in the linear document,
-///    we sum up the character lengths of all previous lines. We add `+ 1` to account for
-///    the hidden newline character (`\n`) that separates each line. We then add the
-///    current `cursor_col`.
+/// 1. **2D to 1D Character Offset**: We use `cursor_char_offset` to find the linear
+///    character position from the line's start offset plus `cursor_col`.
 /// 2. **Character to Byte Offset**: Because Rust strings use variable-length UTF-8 encoding,
-///    character indices do not equal byte indices. We pass the logical character offset
-///    into the buffer to get the exact safe byte offset required by the Piece Table.
+///    we convert the logical character offset into the exact byte offset required by the Piece Table.
 pub(super) fn insert(
     workspace: &mut WorkspaceState,
     widget_states: &mut WidgetStates,
     c: char,
 ) -> DomainResult<()> {
     if let Some(buffer) = workspace.active_buffer_mut() {
-        let mut char_offset = 0;
-
-        // Accumulate characters and newlines from all lines above the cursor
-        for i in 0..widget_states.editor_panel.cursor_line {
-            char_offset += buffer.line_char_len(i) + 1;
-        }
-
-        // Add horizontal column offset within the current line
-        char_offset += widget_states.editor_panel.cursor_col;
+        let char_offset = cursor_char_offset(
+            buffer,
+            widget_states.editor_panel.cursor_line,
+            widget_states.editor_panel.cursor_col,
+        );
 
         // Convert the logical character offset into a absolute byte offset
         let byte_offset = buffer.char_to_byte_offset(char_offset);
@@ -106,13 +88,11 @@ pub fn delete(workspace: &mut WorkspaceState, widget_states: &mut WidgetStates) 
     }
 
     if let Some(buffer) = workspace.active_buffer_mut() {
-        let mut char_offset = 0;
-
-        // Calculate the linear character position of the cursor
-        for i in 0..widget_states.editor_panel.cursor_line {
-            char_offset += buffer.line_char_len(i) + 1;
-        }
-        char_offset += widget_states.editor_panel.cursor_col;
+        let char_offset = cursor_char_offset(
+            buffer,
+            widget_states.editor_panel.cursor_line,
+            widget_states.editor_panel.cursor_col,
+        );
 
         if char_offset == 0 {
             return;

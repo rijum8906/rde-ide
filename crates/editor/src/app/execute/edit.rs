@@ -13,32 +13,29 @@ pub fn delete_line(wss: &mut WorkspaceState, eps: &mut EditorState) -> DomainRes
             return Ok(());
         }
 
-        // 1. Calculate the starting character offset of the target line
-        let mut start_char = 0;
-        for i in 0..eps.cursor_line {
-            start_char += buffer.line_char_len(i) + 1; // +1 accounts for the newline char
-        }
+        let Some(range) = buffer.line_range(eps.cursor_line) else {
+            return Ok(());
+        };
 
-        let line_len = buffer.line_char_len(eps.cursor_line);
+        let start_char = range.start;
+        let line_len = range.end - range.start;
 
         // 2. Determine the character range to delete, including its newline boundary
-        let (start_char, end_char) = if eps.cursor_line + 1 < line_count {
+        let (delete_start, delete_end) = if eps.cursor_line + 1 < line_count {
             // Case A: Not the last line. Delete the line contents plus its trailing newline.
             (start_char, start_char + line_len + 1)
         } else if eps.cursor_line > 0 {
             // Case B: The last line (and not the only line). Delete the preceding newline
             // and this line so we don't leave a trailing blank line at EOF.
-            let prev_line_len = buffer.line_char_len(eps.cursor_line - 1);
-            let prev_start = start_char - prev_line_len - 1;
-            (prev_start + prev_line_len, start_char + line_len)
+            (start_char.saturating_sub(1), start_char + line_len)
         } else {
             // Case C: The only line in the document. Just clear its contents.
             (start_char, start_char + line_len)
         };
 
         // 3. Convert logical character offsets into safe UTF-8 byte offsets
-        let start_byte = buffer.char_to_byte_offset(start_char);
-        let end_byte = buffer.char_to_byte_offset(end_char);
+        let start_byte = buffer.char_to_byte_offset(delete_start);
+        let end_byte = buffer.char_to_byte_offset(delete_end);
 
         // 4. Perform the deletion on the buffer
         if buffer

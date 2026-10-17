@@ -3,7 +3,8 @@ use tui::state::editor_panel::EditorState;
 
 pub fn goto_file_end(workspace: &mut WorkspaceState, editor_state: &mut EditorState) {
     if let Some(buffer) = workspace.active_buffer() {
-        editor_state.move_to_file_end(buffer.line_char_len(buffer.line_count() - 1));
+        let last_line_idx = buffer.line_count().saturating_sub(1);
+        editor_state.move_to_file_end(buffer.line_char_len(last_line_idx));
     }
 }
 

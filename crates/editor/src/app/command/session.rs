@@ -11,7 +11,11 @@ impl App {
                 self.is_running = false;
             }
             SessionCommand::ForceQuit => self.is_running = false,
-            SessionCommand::SaveBuffer => todo!(),
+            SessionCommand::SaveBuffer => {
+                if let Some(buffer) = self.workspace.active_buffer_mut() {
+                    let _ = buffer.save();
+                }
+            }
             SessionCommand::SaveBufferAs(_) => todo!(),
             SessionCommand::SaveAll => todo!(),
             SessionCommand::OpenFile(_) => todo!(),
