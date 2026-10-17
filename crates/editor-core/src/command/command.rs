@@ -1,90 +1,43 @@
-//! Commands are the vocabulary of the editor.
-//!
-//! A `Command` is *what* should happen. Keys, macros, the command line,
-//! and tests all produce `Command`s. The executor turns them into effects.
+// crates/editor-core/src/command/mod.rs
 
+pub mod command_line;
+pub mod edit;
+pub mod layout;
+pub mod mode;
+pub mod motion;
+pub mod navigation;
+pub mod session;
+
+pub use command_line::CommandLineCommand;
+pub use edit::EditCommand;
+pub use layout::LayoutCommand;
+pub use mode::ModeCommand;
+pub use motion::Motion;
+pub use navigation::NavigationCommand;
+pub use session::SessionCommand;
+
+/// The top-level command type. Every action the editor can take is one
+/// of these variants.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Command {
-    // --- Application lifecycle ------------------------------------------
-    Quit,
-    ForceQuit,
-    SaveBuffer,
-    SaveBufferAs(String),
+    /// Application lifecycle: quit, save, open.
+    Session(SessionCommand),
 
-    // --- Tab / buffer navigation ----------------------------------------
-    NextTab,
-    PrevTab,
-    SelectTab(usize),
-    CloseTab,
-    NewScratchBuffer,
+    /// Tab and buffer navigation.
+    Navigation(NavigationCommand),
 
-    // --- Mode transitions -----------------------------------------------
-    EnterMode(Mode),
-    ExitToNormal,
+    /// Cursor movement.
+    Motion(Motion),
 
-    // --- Layout ---------------------------------------------------------
-    ToggleFullscreen,
-    ToggleLeftPanel,
-    ToggleRightPanel,
+    /// Mode transitions (Normal/Insert/Visual/Command).
+    Mode(ModeCommand),
 
-    // --- Cursor (stubs for later) ---------------------------------------
-    MoveCursor(Direction),
-    MoveToLineStart,
-    MoveToLineEnd,
-    MoveToFileStart,
-    MoveToFileEnd,
+    /// Layout changes (fullscreen, panel visibility).
+    Layout(LayoutCommand),
 
-    // --- Editing (stubs) ------------------------------------------------
-    InsertChar(char),
-    InsertNewline,
-    DeleteChar,
-    Backspace,
-    Undo,
-    Redo,
+    /// Editing the buffer.
+    Edit(EditCommand),
 
-    // --- Command line ---------------------------------------------------
-    OpenCommandLine,
-    SubmitCommandLine,
-    CancelCommandLine,
-    CommandLinePush(char),
-    CommandLinePop,
-}
-
-use crate::input::mode::Mode;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
-impl Command {
-    /// Returns true if this command represents a quit action (`Quit` or `ForceQuit`).
-    pub fn should_quit(&self) -> bool {
-        matches!(self, Self::Quit | Self::ForceQuit)
-    }
-
-    /// Alias for `should_quit`.
-    pub fn is_quit(&self) -> bool {
-        self.should_quit()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_command_should_quit() {
-        assert!(Command::Quit.should_quit());
-        assert!(Command::ForceQuit.should_quit());
-        assert!(Command::Quit.is_quit());
-        assert!(Command::ForceQuit.is_quit());
-
-        assert!(!Command::SaveBuffer.should_quit());
-        assert!(!Command::NextTab.should_quit());
-        assert!(!Command::EnterMode(Mode::Normal).should_quit());
-    }
+    /// Command-line editing.
+    CommandLine(CommandLineCommand),
 }

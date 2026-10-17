@@ -8,7 +8,19 @@ use std::vec;
 
 use super::key::{Key, KeyCode, KeyExt};
 use super::mode::Mode;
-use crate::command::command::{Command, Direction};
+use crate::command::command::Command;
+use crate::command::command::CommandLineCommand::{Cancel, Pop, Submit};
+use crate::command::command::EditCommand::{Backspace, DeleteLine, InsertNewline};
+use crate::command::command::LayoutCommand::{ToggleFullscreen, ToggleLeftPanel};
+use crate::command::command::ModeCommand::{
+    Enter, ExitToNormal, InsertAfter, InsertAtLineEnd, InsertAtLineStart, InsertNewLineAbove,
+    InsertNewLineBelow,
+};
+use crate::command::command::Motion::{
+    Down, FileEnd, FileStart, Left, LineEnd, LineStart, Right, Up,
+};
+use crate::command::command::NavigationCommand::{CloseTab, NextTab, PrevTab};
+use crate::command::command::SessionCommand::{ForceQuit, NewScratchBuffer, Quit, SaveBuffer};
 
 /// A sequence of keys, e.g. `[g, g]` or `[Ctrl+w, Ctrl+w]`.
 pub type KeySeq = Vec<Key>;
@@ -85,85 +97,94 @@ pub fn default_keymap() -> Keymap {
     let n = Mode::Normal;
 
     // Quit
-    km.bind(n, vec![Key::plain(KeyCode::Esc)], Command::Quit);
-    km.bind(n, vec![Key::ctrl('q')], Command::ForceQuit);
-    km.bind(n, vec![Key::ctrl('c')], Command::ForceQuit);
+    km.bind(n, vec![Key::plain(KeyCode::Esc)], Command::Session(Quit));
+    km.bind(n, vec![Key::ctrl('q')], Command::Session(ForceQuit));
+    km.bind(n, vec![Key::ctrl('c')], Command::Session(ForceQuit));
 
     // Save
-    km.bind(n, vec![Key::ctrl('s')], Command::SaveBuffer);
+    km.bind(n, vec![Key::ctrl('s')], Command::Session(SaveBuffer));
 
     // Tabs
-    km.bind(n, vec![Key::plain(KeyCode::Tab)], Command::NextTab);
-    km.bind(n, vec![Key::plain(KeyCode::BackTab)], Command::PrevTab);
-    km.bind(n, vec![Key::ctrl('n')], Command::NewScratchBuffer);
-    km.bind(n, vec![Key::ctrl('w')], Command::CloseTab);
+    km.bind(
+        n,
+        vec![Key::plain(KeyCode::Tab)],
+        Command::Navigation(NextTab),
+    );
+    km.bind(
+        n,
+        vec![Key::plain(KeyCode::BackTab)],
+        Command::Navigation(PrevTab),
+    );
+    km.bind(n, vec![Key::ctrl('n')], Command::Session(NewScratchBuffer));
+    km.bind(n, vec![Key::ctrl('w')], Command::Navigation(CloseTab));
 
     // Layout
-    km.bind(n, vec![Key::ctrl('f')], Command::ToggleFullscreen);
+    km.bind(n, vec![Key::ctrl('f')], Command::Layout(ToggleFullscreen));
 
     // Mode transitions
-    km.bind(n, vec![Key::char('i')], Command::EnterMode(Mode::Insert));
-    km.bind(n, vec![Key::char('v')], Command::EnterMode(Mode::Visual));
-    km.bind(n, vec![Key::char(':')], Command::OpenCommandLine);
+    km.bind(n, vec![Key::char('i')], Command::Mode(Enter(Mode::Insert)));
+    km.bind(n, vec![Key::char('v')], Command::Mode(Enter(Mode::Visual)));
+    km.bind(n, vec![Key::char('a')], Command::Mode(InsertAfter));
+    km.bind(n, vec![Key::char('A')], Command::Mode(InsertAtLineEnd));
+    km.bind(n, vec![Key::char('I')], Command::Mode(InsertAtLineStart));
+    km.bind(n, vec![Key::char('o')], Command::Mode(InsertNewLineBelow));
+    km.bind(n, vec![Key::char('O')], Command::Mode(InsertNewLineAbove));
+    km.bind(n, vec![Key::char(':')], Command::Mode(Enter(Mode::Command)));
+    km.bind(
+        n,
+        vec![Key::char('d'), Key::char('d')],
+        Command::Edit(DeleteLine),
+    );
     km.bind(
         n,
         vec![Key::char(' '), Key::char('e')],
-        Command::ToggleLeftPanel,
+        Command::Layout(ToggleLeftPanel),
     );
+    km.bind(n, vec![Key::ctrl('b')], Command::Layout(ToggleLeftPanel));
 
     // Cursor movement (hjkl + arrows)
-    km.bind(
-        n,
-        vec![Key::char('h')],
-        Command::MoveCursor(Direction::Left),
-    );
-    km.bind(
-        n,
-        vec![Key::char('j')],
-        Command::MoveCursor(Direction::Down),
-    );
-    km.bind(n, vec![Key::char('k')], Command::MoveCursor(Direction::Up));
-    km.bind(
-        n,
-        vec![Key::char('l')],
-        Command::MoveCursor(Direction::Right),
-    );
-    km.bind(
-        n,
-        vec![Key::plain(KeyCode::Left)],
-        Command::MoveCursor(Direction::Left),
-    );
-    km.bind(
-        n,
-        vec![Key::plain(KeyCode::Down)],
-        Command::MoveCursor(Direction::Down),
-    );
-    km.bind(
-        n,
-        vec![Key::plain(KeyCode::Up)],
-        Command::MoveCursor(Direction::Up),
-    );
-    km.bind(
-        n,
-        vec![Key::plain(KeyCode::Right)],
-        Command::MoveCursor(Direction::Right),
-    );
+    km.bind(n, vec![Key::char('h')], Command::Motion(Left));
+    km.bind(n, vec![Key::char('j')], Command::Motion(Down));
+    km.bind(n, vec![Key::char('k')], Command::Motion(Up));
+    km.bind(n, vec![Key::char('l')], Command::Motion(Right));
+    km.bind(n, vec![Key::plain(KeyCode::Left)], Command::Motion(Left));
+    km.bind(n, vec![Key::plain(KeyCode::Down)], Command::Motion(Down));
+    km.bind(n, vec![Key::plain(KeyCode::Up)], Command::Motion(Up));
+    km.bind(n, vec![Key::plain(KeyCode::Right)], Command::Motion(Right));
 
     // Multi-key: `gg` jumps to start of file
     km.bind(
         n,
         vec![Key::char('g'), Key::char('g')],
-        Command::MoveToFileStart,
+        Command::Motion(FileStart),
     );
-    km.bind(n, vec![Key::char('G')], Command::MoveToFileEnd);
-    km.bind(n, vec![Key::char('$')], Command::MoveToLineEnd);
-    km.bind(n, vec![Key::char('0')], Command::MoveToLineStart);
+    km.bind(n, vec![Key::char('G')], Command::Motion(FileEnd));
+    km.bind(n, vec![Key::char('$')], Command::Motion(LineEnd));
+    km.bind(n, vec![Key::char('0')], Command::Motion(LineStart));
 
     // --- Insert mode ----------------------------------------------------
     let i = Mode::Insert;
-    km.bind(i, vec![Key::plain(KeyCode::Esc)], Command::ExitToNormal);
-    km.bind(i, vec![Key::plain(KeyCode::Enter)], Command::InsertNewline);
-    km.bind(i, vec![Key::plain(KeyCode::Backspace)], Command::Backspace);
+    km.bind(
+        i,
+        vec![Key::plain(KeyCode::Esc)],
+        Command::Mode(ExitToNormal),
+    );
+    km.bind(
+        i,
+        vec![Key::plain(KeyCode::Enter)],
+        Command::Edit(InsertNewline),
+    );
+    km.bind(
+        i,
+        vec![Key::plain(KeyCode::Backspace)],
+        Command::Edit(Backspace),
+    );
+    km.bind(i, vec![Key::plain(KeyCode::Left)], Command::Motion(Left));
+    km.bind(i, vec![Key::plain(KeyCode::Down)], Command::Motion(Down));
+    km.bind(i, vec![Key::plain(KeyCode::Up)], Command::Motion(Up));
+    km.bind(i, vec![Key::plain(KeyCode::Right)], Command::Motion(Right));
+    km.bind(i, vec![Key::ctrl('j')], Command::Mode(ExitToNormal));
+    km.bind(i, vec![Key::ctrl('k')], Command::Mode(ExitToNormal));
     // Printable chars handled by fall-through in the resolver, not bound here.
 
     // --- Command-line mode ---------------------------------------------
@@ -171,25 +192,33 @@ pub fn default_keymap() -> Keymap {
     km.bind(
         c,
         vec![Key::plain(KeyCode::Esc)],
-        Command::CancelCommandLine,
+        Command::CommandLine(Cancel),
     );
     km.bind(
         c,
         vec![Key::plain(KeyCode::Enter)],
-        Command::SubmitCommandLine,
+        Command::CommandLine(Submit),
     );
     km.bind(
         c,
         vec![Key::plain(KeyCode::Backspace)],
-        Command::CommandLinePop,
+        Command::CommandLine(Pop),
     );
     // Printable chars handled by fall-through.
+    //
+    let v = Mode::Visual;
+    km.bind(
+        v,
+        vec![Key::plain(KeyCode::Esc)],
+        Command::Mode(ExitToNormal),
+    );
 
     km
 }
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     #[test]
@@ -198,17 +227,17 @@ mod tests {
         // Esc binds to Quit
         assert_eq!(
             km.lookup(Mode::Normal, &[Key::plain(KeyCode::Esc)]),
-            Some(&Command::Quit)
+            Some(&Command::Session(Quit))
         );
         // Ctrl+q binds to ForceQuit
         assert_eq!(
             km.lookup(Mode::Normal, &[Key::ctrl('q')]),
-            Some(&Command::ForceQuit)
+            Some(&Command::Session(ForceQuit))
         );
         // Ctrl+c binds to ForceQuit
         assert_eq!(
             km.lookup(Mode::Normal, &[Key::ctrl('c')]),
-            Some(&Command::ForceQuit)
+            Some(&Command::Session(ForceQuit))
         );
     }
 
@@ -216,5 +245,23 @@ mod tests {
     fn test_empty_keymap() {
         let km = Keymap::empty();
         assert_eq!(km.lookup(Mode::Normal, &[Key::plain(KeyCode::Esc)]), None);
+    }
+
+    #[test]
+    fn test_insert_mode_ctrl_j_and_ctrl_b() {
+        let km = Keymap::default();
+        assert_eq!(
+            km.lookup(Mode::Insert, &[Key::ctrl('b')]),
+            Some(&Command::Layout(ToggleLeftPanel))
+        );
+        assert_eq!(
+            km.lookup(Mode::Insert, &[Key::ctrl('j')]),
+            Some(&Command::Mode(Enter(Mode::Normal)))
+        );
+        // Also verify case insensitivity with Key::ctrl('J')
+        assert_eq!(
+            km.lookup(Mode::Insert, &[Key::ctrl('J')]),
+            Some(&Command::Mode(Enter(Mode::Normal)))
+        );
     }
 }

@@ -34,7 +34,7 @@ pub const fn char(c: char) -> KeyEvent {
 /// Helper to create a Ctrl+<char> key event.
 pub const fn ctrl(c: char) -> KeyEvent {
     KeyEvent {
-        code: KeyCode::Char(c),
+        code: KeyCode::Char(c.to_ascii_lowercase()),
         modifiers: KeyModifiers::CONTROL,
         kind: KeyEventKind::Press,
         state: KeyEventState::empty(),
@@ -54,12 +54,13 @@ pub const fn shift(c: char) -> KeyEvent {
 /// Helper to create an Alt+<char> key event.
 pub const fn alt(c: char) -> KeyEvent {
     KeyEvent {
-        code: KeyCode::Char(c),
+        code: KeyCode::Char(c.to_ascii_lowercase()),
         modifiers: KeyModifiers::ALT,
         kind: KeyEventKind::Press,
         state: KeyEventState::empty(),
     }
 }
+
 
 /// Extension trait providing associated constructor functions and helpers on `Key`/`KeyEvent`.
 pub trait KeyExt {

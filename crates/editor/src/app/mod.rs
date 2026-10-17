@@ -1,4 +1,5 @@
 pub mod builder;
+pub mod command;
 pub mod execute;
 pub mod render;
 
@@ -7,7 +8,7 @@ use std::time::Duration;
 use crossterm::event::{self, Event};
 use domain::{error::Result, workspace::WorkspaceState};
 use editor_core::{
-    command::command::Command,
+    command::command::{Command, CommandLineCommand::Push, EditCommand::InsertChar},
     input::{
         key::Key,
         keymap::Keymap,
@@ -148,13 +149,12 @@ impl App {
     fn handle_unhandled(&mut self, keys: editor_core::input::resolver::Pending) -> Result<()> {
         for key in keys {
             if let editor_core::input::key::KeyCode::Char(c) = key.code {
-                if !key
-                    .modifiers
-                    .intersects(crossterm::event::KeyModifiers::CONTROL | crossterm::event::KeyModifiers::ALT)
-                {
+                if !key.modifiers.intersects(
+                    crossterm::event::KeyModifiers::CONTROL | crossterm::event::KeyModifiers::ALT,
+                ) {
                     match self.mode {
-                        Mode::Insert => self.execute(Command::InsertChar(c))?,
-                        Mode::Command => self.execute(Command::CommandLinePush(c))?,
+                        Mode::Insert => self.execute(Command::Edit(InsertChar(c)))?,
+                        Mode::Command => self.execute(Command::CommandLine(Push(c)))?,
                         _ => {}
                     }
                 }
@@ -179,7 +179,10 @@ impl App {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use editor_core::input::key::{KeyCode, KeyExt};
+    use editor_core::{
+        command::command::SessionCommand::Quit,
+        input::key::{KeyCode, KeyExt},
+    };
 
     #[test]
     fn test_app_should_quit() {
@@ -192,7 +195,7 @@ mod tests {
         assert!(!app.should_quit());
 
         // Quitting sets is_running to false, so should_quit becomes true
-        app.execute(Command::Quit).unwrap();
+        app.execute(Command::Session(Quit)).unwrap();
         assert!(!app.is_running);
         assert!(app.should_quit());
     }
@@ -222,5 +225,14 @@ mod tests {
         app.handle_key(Key::ctrl('c')).unwrap();
         assert!(!app.is_running);
         assert!(app.should_quit());
+    }
+
+    #[test]
+    fn test_insert_ctrl_j_enters_normal_mode() {
+        let mut app = App::new().unwrap();
+        app.is_running = true;
+        app.mode = Mode::Insert;
+        app.handle_key(Key::ctrl('j')).unwrap();
+        assert_eq!(app.mode, Mode::Normal);
     }
 }
