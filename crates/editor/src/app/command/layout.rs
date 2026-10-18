@@ -7,7 +7,7 @@ impl App {
         match cmd {
             LayoutCommand::ToggleFullscreen => todo!(),
             LayoutCommand::ToggleLeftPanel => {
-                self.layout_states.left_panel_open = !self.layout_states.left_panel_open
+                self.ui.widgets.left_panel.is_open = !self.ui.widgets.left_panel.is_open
             }
             LayoutCommand::ToggleRightPanel => todo!(),
             LayoutCommand::FocusLeftPanel => todo!(),

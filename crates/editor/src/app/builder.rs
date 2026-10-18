@@ -1,4 +1,4 @@
-use domain::workspace::{file_tree::scan_dir, WorkspaceState};
+use domain::workspace::{WorkspaceState, file_tree::scan_dir};
 use tui::viewmodel::{
     bottom_bar::{BottomBarMode, BottomBarView},
     editor_panel::{EditorPanelView, LineView},
@@ -40,12 +40,12 @@ impl App {
 
         BottomBarView {
             mode: BottomBarMode::Status,
-            mode_label: self.mode.as_str(),
+            mode_label: self.input.mode.as_str(),
             file_name,
             is_dirty,
             cursor: (
-                self.widget_states.editor_panel.cursor_col,
-                self.widget_states.editor_panel.cursor_line,
+                self.ui.widgets.editor_panel.state.cursor_col,
+                self.ui.widgets.editor_panel.state.cursor_line,
             ),
             line_count,
             message: None,
@@ -81,14 +81,15 @@ impl App {
         };
 
         // NOTE: at each frame the we need to update the line count
-        self.widget_states.editor_panel.line_count = buffer.line_count();
+
+        self.ui.widgets.editor_panel.state.line_count = buffer.line_count();
 
         let mut line_views = vec![];
         for i in 0..buffer.line_count() {
             line_views.push(LineView {
                 number: i + 1,
                 text: buffer.line(i).unwrap(),
-                is_current: i == self.widget_states.editor_panel.cursor_line,
+                is_current: i == self.ui.widgets.editor_panel.state.cursor_line,
                 selection: None,
             });
         }
@@ -96,8 +97,8 @@ impl App {
         EditorPanelView {
             lines: line_views,
             cursor_screen: Some((
-                self.widget_states.editor_panel.cursor_line as u16,
-                self.widget_states.editor_panel.cursor_col as u16,
+                self.ui.widgets.editor_panel.state.cursor_line as u16,
+                self.ui.widgets.editor_panel.state.cursor_col as u16,
             )),
             gutter_width: 5,
             is_focused: true,

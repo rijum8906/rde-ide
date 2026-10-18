@@ -3,26 +3,26 @@ use crate::{
     input::{
         key::{Key, KeyCode, KeyExt},
         keymap::Keymap,
-        mode::Mode,
+        mode::InputMode,
     },
 };
 
 pub(super) fn default_mode_keymap(keymap: &mut Keymap) -> &mut Keymap {
-    let normal = Mode::Normal;
+    let normal = InputMode::Normal;
     keymap.bind(
         normal,
         vec![Key::char('i')],
-        Command::Mode(ModeCommand::Enter(Mode::Insert)),
+        Command::Mode(ModeCommand::Enter(InputMode::Insert)),
+    );
+    keymap.bind(
+        normal,
+        vec![Key::shift('a')],
+        Command::Mode(ModeCommand::InsertAfter),
     );
     keymap.bind(
         normal,
         vec![Key::char('v')],
-        Command::Mode(ModeCommand::Enter(Mode::Visual)),
-    );
-    keymap.bind(
-        normal,
-        vec![Key::char('a')],
-        Command::Mode(ModeCommand::InsertAfter),
+        Command::Mode(ModeCommand::Enter(InputMode::Visual)),
     );
     keymap.bind(
         normal,
@@ -47,10 +47,10 @@ pub(super) fn default_mode_keymap(keymap: &mut Keymap) -> &mut Keymap {
     keymap.bind(
         normal,
         vec![Key::char(':')],
-        Command::Mode(ModeCommand::Enter(Mode::Command)),
+        Command::Mode(ModeCommand::Enter(InputMode::Command)),
     );
 
-    for mode in [Mode::Insert, Mode::Visual] {
+    for mode in [InputMode::Insert, InputMode::Visual] {
         keymap.bind(
             mode,
             vec![Key::plain(KeyCode::Esc)],
@@ -58,12 +58,12 @@ pub(super) fn default_mode_keymap(keymap: &mut Keymap) -> &mut Keymap {
         );
     }
     keymap.bind(
-        Mode::Insert,
+        InputMode::Insert,
         vec![Key::ctrl('j')],
         Command::Mode(ModeCommand::ExitToNormal),
     );
     keymap.bind(
-        Mode::Insert,
+        InputMode::Insert,
         vec![Key::ctrl('k')],
         Command::Mode(ModeCommand::ExitToNormal),
     );

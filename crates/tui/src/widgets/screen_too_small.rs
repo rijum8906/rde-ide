@@ -1,4 +1,3 @@
-use domain::error::IdeError;
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -18,18 +17,6 @@ pub struct ScreenTooSmall {
 impl ScreenTooSmall {
     pub fn new(cur_w: u16, cur_h: u16) -> Self {
         Self { cur_w, cur_h }
-    }
-
-    pub fn from_err(err: IdeError) -> Self {
-        match err {
-            IdeError::ScreenTooSmall {
-                min_w: _,
-                min_h: _,
-                cur_w,
-                cur_h,
-            } => Self { cur_w, cur_h },
-            _ => Self::new(10, 10),
-        }
     }
 }
 

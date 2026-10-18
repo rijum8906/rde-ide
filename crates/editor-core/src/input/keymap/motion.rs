@@ -6,12 +6,12 @@ use crate::{
     input::{
         key::{Key, KeyCode, KeyExt},
         keymap::Keymap,
-        mode::Mode,
+        mode::InputMode,
     },
 };
 
 pub(super) fn default_motion_keymap(keymap: &mut Keymap) -> &mut Keymap {
-    let normal = Mode::Normal;
+    let normal = InputMode::Normal;
     keymap.bind(normal, vec![Key::char('h')], Command::Motion(Left));
     keymap.bind(
         normal,
@@ -41,7 +41,7 @@ pub(super) fn default_motion_keymap(keymap: &mut Keymap) -> &mut Keymap {
     keymap.bind(normal, vec![Key::char('0')], Command::Motion(LineStart));
     keymap.bind(normal, vec![Key::char('$')], Command::Motion(LineEnd));
 
-    let insert = Mode::Insert;
+    let insert = InputMode::Insert;
     keymap.bind(
         insert,
         vec![Key::plain(KeyCode::Left)],

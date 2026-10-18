@@ -15,18 +15,18 @@ const SEPARATOR: char = '│';
 
 /// Tab strip rendered by the top bar.
 #[derive(Debug)]
-pub struct TopBar<'a> {
+pub struct TopBarWidget<'a> {
     view: &'a TopBarView<'a>,
 }
 
-impl<'a> TopBar<'a> {
+impl<'a> TopBarWidget<'a> {
     /// Construct the widget from its view model.
     pub fn new(view: &'a TopBarView<'a>) -> Self {
         Self { view }
     }
 }
 
-impl StatefulWidget for TopBar<'_> {
+impl StatefulWidget for TopBarWidget<'_> {
     type State = TopBarState;
 
     fn render(self, area: Rect, buf: &mut Buffer, _state: &mut TopBarState) {

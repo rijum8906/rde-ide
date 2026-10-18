@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 
 use super::key::Key;
-use super::mode::Mode;
+use super::mode::InputMode;
 use crate::command::command::Command;
 use crate::input::keymap::command_line::default_command_line_keymap;
 use crate::input::keymap::edit::default_edit_keymap;
@@ -31,7 +31,7 @@ pub type KeySeq = Vec<Key>;
 #[derive(Debug)]
 pub struct Keymap {
     /// mode -> full sequence -> command
-    bindings: HashMap<Mode, HashMap<KeySeq, Command>>,
+    bindings: HashMap<InputMode, HashMap<KeySeq, Command>>,
 }
 
 impl Default for Keymap {
@@ -53,7 +53,7 @@ impl Keymap {
         }
     }
 
-    pub fn bind(&mut self, mode: Mode, seq: impl Into<KeySeq>, cmd: Command) {
+    pub fn bind(&mut self, mode: InputMode, seq: impl Into<KeySeq>, cmd: Command) {
         self.bindings
             .entry(mode)
             .or_default()
@@ -61,7 +61,7 @@ impl Keymap {
     }
 
     /// Look up an exact sequence in a mode.
-    pub fn lookup(&self, mode: Mode, seq: &[Key]) -> Option<&Command> {
+    pub fn lookup(&self, mode: InputMode, seq: &[Key]) -> Option<&Command> {
         self.bindings.get(&mode)?.get(seq)
     }
 
@@ -69,7 +69,7 @@ impl Keymap {
     ///
     /// Used by the resolver to decide whether to wait for the next key
     /// (multi-key binding in progress) or to give up.
-    pub fn is_prefix(&self, mode: Mode, seq: &[Key]) -> bool {
+    pub fn is_prefix(&self, mode: InputMode, seq: &[Key]) -> bool {
         let Some(table) = self.bindings.get(&mode) else {
             return false;
         };
@@ -80,7 +80,7 @@ impl Keymap {
 
     /// Does any binding in this mode *start with* `seq`? Includes exact
     /// matches, so callers can check "is this a partial path at all".
-    pub fn has_any_match(&self, mode: Mode, seq: &[Key]) -> bool {
+    pub fn has_any_match(&self, mode: InputMode, seq: &[Key]) -> bool {
         let Some(table) = self.bindings.get(&mode) else {
             return false;
         };
@@ -110,7 +110,7 @@ mod tests {
         command::command::{
             Command,
             LayoutCommand::ToggleLeftPanel,
-            ModeCommand::ExitToNormal,
+            ModeCommand::{ExitToNormal, InsertAtLineEnd, InsertAtLineStart},
             SessionCommand::{ForceQuit, Quit},
         },
         input::key::{KeyCode, KeyExt},
@@ -120,11 +120,11 @@ mod tests {
     fn default_keymap_contains_session_bindings() {
         let keymap = Keymap::default();
         assert_eq!(
-            keymap.lookup(Mode::Normal, &[Key::plain(KeyCode::Esc)]),
+            keymap.lookup(InputMode::Normal, &[Key::plain(KeyCode::Esc)]),
             Some(&Command::Session(Quit))
         );
         assert_eq!(
-            keymap.lookup(Mode::Normal, &[Key::ctrl('q')]),
+            keymap.lookup(InputMode::Normal, &[Key::ctrl('q')]),
             Some(&Command::Session(ForceQuit))
         );
     }
@@ -132,7 +132,7 @@ mod tests {
     #[test]
     fn empty_keymap_contains_no_bindings() {
         assert_eq!(
-            Keymap::empty().lookup(Mode::Normal, &[Key::plain(KeyCode::Esc)]),
+            Keymap::empty().lookup(InputMode::Normal, &[Key::plain(KeyCode::Esc)]),
             None
         );
     }
@@ -141,12 +141,38 @@ mod tests {
     fn default_keymap_contains_mode_and_layout_bindings() {
         let keymap = Keymap::default();
         assert_eq!(
-            keymap.lookup(Mode::Normal, &[Key::ctrl('b')]),
+            keymap.lookup(InputMode::Normal, &[Key::ctrl('b')]),
             Some(&Command::Layout(ToggleLeftPanel))
         );
         assert_eq!(
-            keymap.lookup(Mode::Insert, &[Key::ctrl('j')]),
+            keymap.lookup(InputMode::Insert, &[Key::ctrl('j')]),
             Some(&Command::Mode(ExitToNormal))
         );
+    }
+
+    #[test]
+    fn uppercase_insert_commands_accept_terminal_key_encodings() {
+        let keymap = Keymap::default();
+
+        for key in [
+            Key::char('A'),
+            Key::plain(KeyCode::Char('A')),
+            Key::shift('a'),
+        ] {
+            assert_eq!(
+                keymap.lookup(InputMode::Normal, &[key]),
+                Some(&Command::Mode(InsertAtLineEnd))
+            );
+        }
+        for key in [
+            Key::char('I'),
+            Key::plain(KeyCode::Char('I')),
+            Key::shift('i'),
+        ] {
+            assert_eq!(
+                keymap.lookup(InputMode::Normal, &[key]),
+                Some(&Command::Mode(InsertAtLineStart))
+            );
+        }
     }
 }

@@ -8,5 +8,6 @@ rust-version.workspace = true
 
 [dependencies]
 crossterm.workspace = true
-smallvec = "1.16.3"
+tui.workspace = true
 
+smallvec = "1.16.3"

@@ -10,7 +10,7 @@
 /// bytes. Multi-byte input works correctly because every offset counts
 /// `char`s, not `u8`s.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub struct EditorState {
+pub struct EditorPanelState {
     /// Cursor line (row), 0-indexed from the top of the buffer.
     pub cursor_line: usize,
 
@@ -34,7 +34,7 @@ pub struct EditorState {
     pub highlight_current_line: bool,
 }
 
-impl EditorState {
+impl EditorPanelState {
     pub fn new() -> Self {
         Self {
             cursor_line: 0,

@@ -3,12 +3,12 @@ use crate::{
     input::{
         key::{Key, KeyCode, KeyExt},
         keymap::Keymap,
-        mode::Mode,
+        mode::InputMode,
     },
 };
 
 pub(super) fn default_workspace_keymap(keymap: &mut Keymap) -> &mut Keymap {
-    let normal = Mode::Normal;
+    let normal = InputMode::Normal;
     keymap.bind(
         normal,
         vec![Key::plain(KeyCode::Tab)],

@@ -11,14 +11,14 @@ use domain::{
     error::{DomainError, DomainResult},
     workspace::WorkspaceState,
 };
-use tui::widgets::WidgetStates;
+use tui::widgets::Widgets;
 
 /// Inserts a standard character at the current cursor position.
 ///
 /// On success, advances the horizontal cursor column (`cursor_col`) by 1.
-pub fn insert_char(workspace: &mut WorkspaceState, widget_states: &mut WidgetStates, c: char) {
+pub fn insert_char(workspace: &mut WorkspaceState, widget_states: &mut Widgets, c: char) {
     if insert(workspace, widget_states, c).is_ok() {
-        widget_states.editor_panel.cursor_col += 1;
+        widget_states.editor_panel.state.cursor_col += 1;
     }
 }
 
@@ -26,10 +26,10 @@ pub fn insert_char(workspace: &mut WorkspaceState, widget_states: &mut WidgetSta
 ///
 /// On success, moves the cursor down to the start of the next line
 /// (`cursor_line += 1`, `cursor_col = 0`).
-pub fn insert_new_line(workspace: &mut WorkspaceState, widget_states: &mut WidgetStates) {
+pub fn insert_new_line(workspace: &mut WorkspaceState, widget_states: &mut Widgets) {
     if insert(workspace, widget_states, '\n').is_ok() {
-        widget_states.editor_panel.cursor_line += 1;
-        widget_states.editor_panel.cursor_col = 0;
+        widget_states.editor_panel.state.cursor_line += 1;
+        widget_states.editor_panel.state.cursor_col = 0;
     }
 }
 
@@ -54,14 +54,14 @@ pub fn cursor_char_offset(
 ///    we convert the logical character offset into the exact byte offset required by the Piece Table.
 pub(super) fn insert(
     workspace: &mut WorkspaceState,
-    widget_states: &mut WidgetStates,
+    widget_states: &mut Widgets,
     c: char,
 ) -> DomainResult<()> {
     if let Some(buffer) = workspace.active_buffer_mut() {
         let char_offset = cursor_char_offset(
             buffer,
-            widget_states.editor_panel.cursor_line,
-            widget_states.editor_panel.cursor_col,
+            widget_states.editor_panel.state.cursor_line,
+            widget_states.editor_panel.state.cursor_col,
         );
 
         // Convert the logical character offset into a absolute byte offset
@@ -81,17 +81,19 @@ pub(super) fn insert(
 ///   backspacing deletes the newline character of the previous line, merging the current
 ///   line onto the end of the previous one. The cursor must then hop up to the end
 ///   of that previous line.
-pub fn delete(workspace: &mut WorkspaceState, widget_states: &mut WidgetStates) {
+pub fn delete(workspace: &mut WorkspaceState, widget_states: &mut Widgets) {
     // Guard: Cannot delete if we are at the very top-left of the document
-    if widget_states.editor_panel.cursor_line == 0 && widget_states.editor_panel.cursor_col == 0 {
+    if widget_states.editor_panel.state.cursor_line == 0
+        && widget_states.editor_panel.state.cursor_col == 0
+    {
         return;
     }
 
     if let Some(buffer) = workspace.active_buffer_mut() {
         let char_offset = cursor_char_offset(
             buffer,
-            widget_states.editor_panel.cursor_line,
-            widget_states.editor_panel.cursor_col,
+            widget_states.editor_panel.state.cursor_line,
+            widget_states.editor_panel.state.cursor_col,
         );
 
         if char_offset == 0 {
@@ -103,8 +105,8 @@ pub fn delete(workspace: &mut WorkspaceState, widget_states: &mut WidgetStates) 
         let start_byte = buffer.char_to_byte_offset(char_offset - 1);
 
         // Pre-fetch the length of the line above us in case we merge lines across a newline
-        let prev_line_len = if widget_states.editor_panel.cursor_line > 0 {
-            buffer.line_char_len(widget_states.editor_panel.cursor_line - 1)
+        let prev_line_len = if widget_states.editor_panel.state.cursor_line > 0 {
+            buffer.line_char_len(widget_states.editor_panel.state.cursor_line - 1)
         } else {
             0
         };
@@ -118,13 +120,13 @@ pub fn delete(workspace: &mut WorkspaceState, widget_states: &mut WidgetStates) 
             .is_ok()
         {
             // Update cursor position based on where the backspace occurred
-            if widget_states.editor_panel.cursor_col > 0 {
+            if widget_states.editor_panel.state.cursor_col > 0 {
                 // Case A: Normal backspace within the same line
-                widget_states.editor_panel.cursor_col -= 1;
-            } else if widget_states.editor_panel.cursor_line > 0 {
+                widget_states.editor_panel.state.cursor_col -= 1;
+            } else if widget_states.editor_panel.state.cursor_line > 0 {
                 // Case B: Backspacing at the start of a line (deleting a newline)
-                widget_states.editor_panel.cursor_line -= 1;
-                widget_states.editor_panel.cursor_col = prev_line_len;
+                widget_states.editor_panel.state.cursor_line -= 1;
+                widget_states.editor_panel.state.cursor_col = prev_line_len;
             }
         }
     }

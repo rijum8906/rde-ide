@@ -12,26 +12,26 @@ use ratatui::{
 };
 
 use crate::{
-    state::editor_panel::EditorState,
+    state::editor_panel::EditorPanelState,
     viewmodel::editor_panel::{EditorPanelView, LineView},
 };
 
 /// Editor panel widget.
 #[derive(Debug)]
-pub struct EditorPanel<'a> {
+pub struct EditorPanelWidget<'a> {
     view: &'a EditorPanelView,
 }
 
-impl<'a> EditorPanel<'a> {
+impl<'a> EditorPanelWidget<'a> {
     pub fn new(view: &'a EditorPanelView) -> Self {
         Self { view }
     }
 }
 
-impl StatefulWidget for EditorPanel<'_> {
-    type State = EditorState;
+impl StatefulWidget for EditorPanelWidget<'_> {
+    type State = EditorPanelState;
 
-    fn render(self, area: Rect, buf: &mut Buffer, state: &mut EditorState) {
+    fn render(self, area: Rect, buf: &mut Buffer, state: &mut EditorPanelState) {
         if area.width == 0 || area.height == 0 {
             return;
         }
@@ -69,7 +69,7 @@ impl StatefulWidget for EditorPanel<'_> {
     }
 }
 
-impl EditorPanel<'_> {
+impl EditorPanelWidget<'_> {
     fn render_gutter(
         &self,
         line: &LineView,
@@ -101,7 +101,7 @@ impl EditorPanel<'_> {
     fn render_line_text(
         &self,
         line: &LineView,
-        state: &EditorState,
+        state: &EditorPanelState,
         text_x: u16,
         y: u16,
         max_x: u16,

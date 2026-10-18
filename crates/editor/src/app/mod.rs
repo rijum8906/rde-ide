@@ -1,27 +1,20 @@
 pub mod builder;
 pub mod command;
 pub mod execute;
+pub mod geometry;
 pub mod render;
 
 use std::time::Duration;
 
-use crossterm::event::{self, Event};
+use crossterm::event::{self, Event, KeyEvent};
 use domain::{error::Result, workspace::WorkspaceState};
 use editor_core::{
     command::command::{Command, CommandLineCommand::Push, EditCommand::InsertChar},
-    input::{
-        key::Key,
-        keymap::Keymap,
-        mode::Mode,
-        resolver::{ResolveResult, Resolver},
-    },
+    input::{Input, mode::InputMode, resolver::ResolveResult},
+    ui::Ui,
 };
 use platform::events::to_key;
 use ratatui::DefaultTerminal;
-use tui::{
-    layout::LayoutStates,
-    widgets::{Size, WidgetGeometry, WidgetStates},
-};
 
 pub struct App {
     // ============================================================
@@ -32,20 +25,12 @@ pub struct App {
     // ============================================================
     // Editor policy — how input is interpreted
     // ============================================================
-    pub mode: Mode,
-    pub key_map: Keymap,
-    pub resolver: Resolver,
+    input: Input,
 
     // ============================================================
     // Layout policy — what the user wants to see
     // ============================================================
-    pub layout_states: LayoutStates,
-
-    // ============================================================
-    // Widget state — persistent per-widget data across frames
-    // ============================================================
-    pub widget_geometry: WidgetGeometry,
-    pub widget_states: WidgetStates,
+    ui: Ui,
 
     // ============================================================
     // Lifecycle
@@ -62,12 +47,8 @@ impl App {
             workspace: WorkspaceState::from_path(
                 "/home/rijum/Projects/rde-ide/apps/ide/Cargo.toml",
             )?,
-            mode: Mode::Normal,
-            key_map: Keymap::default(),
-            resolver: Resolver::new(),
-            layout_states: LayoutStates::default(),
-            widget_geometry: WidgetGeometry::default(),
-            widget_states: WidgetStates::default(),
+            input: Input::default(),
+            ui: Ui::default(),
             is_running: false,
         })
     }
@@ -77,13 +58,8 @@ impl App {
         self.is_running = true;
 
         if let Ok(size) = terminal.size() {
-            self.widget_geometry = WidgetGeometry::compute_with_layout(
-                Size {
-                    height: size.height,
-                    width: size.width,
-                },
-                &self.layout_states,
-            );
+            self.ui.layout.screen_size = (size.height, size.width);
+            self.calc_widgets_geometry();
         }
 
         while !self.should_quit() {
@@ -95,10 +71,8 @@ impl App {
                         }
                     }
                     Event::Resize(width, height) => {
-                        self.widget_geometry = WidgetGeometry::compute_with_layout(
-                            Size { width, height },
-                            &self.layout_states,
-                        );
+                        self.ui.layout.screen_size = (height, width);
+                        self.calc_widgets_geometry();
                     }
                     _ => {}
                 }
@@ -125,8 +99,12 @@ impl App {
     // ===========================================================
 
     /// Feed one key. Called by the binary's event loop.
-    pub fn handle_key(&mut self, key: Key) -> Result<()> {
-        match self.resolver.feed(self.mode, key, &self.key_map) {
+    pub fn handle_key(&mut self, key_event: KeyEvent) -> Result<()> {
+        match self
+            .input
+            .resolver
+            .feed(self.input.mode, key_event, &self.input.key_map)
+        {
             ResolveResult::Resolved(cmd) => self.execute(cmd)?,
             ResolveResult::Pending => {}
             ResolveResult::Unhandled(keys) => self.handle_unhandled(keys)?,
@@ -139,7 +117,7 @@ impl App {
 
     /// Called once per frame, before feeding keys. Expires stale prefixes.
     pub fn tick(&mut self) -> Result<()> {
-        if let Some(cmd) = self.resolver.poll_timeout(std::time::Instant::now()) {
+        if let Some(cmd) = self.input.resolver.poll_timeout(std::time::Instant::now()) {
             self.execute(cmd)?;
         }
         Ok(())
@@ -152,9 +130,9 @@ impl App {
                 if !key.modifiers.intersects(
                     crossterm::event::KeyModifiers::CONTROL | crossterm::event::KeyModifiers::ALT,
                 ) {
-                    match self.mode {
-                        Mode::Insert => self.execute(Command::Edit(InsertChar(c)))?,
-                        Mode::Command => self.execute(Command::CommandLine(Push(c)))?,
+                    match self.input.mode {
+                        InputMode::Insert => self.execute(Command::Edit(InsertChar(c)))?,
+                        InputMode::Command => self.execute(Command::CommandLine(Push(c)))?,
                         _ => {}
                     }
                 }
@@ -167,12 +145,12 @@ impl App {
     // Setter and Getter
     // ===========================================================
 
-    pub fn set_mode(&mut self, mode: Mode) {
-        self.mode = mode;
+    pub fn set_mode(&mut self, mode: InputMode) {
+        self.input.mode = mode;
     }
 
-    pub fn mode(&self) -> Mode {
-        self.mode
+    pub fn mode(&self) -> InputMode {
+        self.input.mode
     }
 }
 
@@ -204,7 +182,7 @@ mod tests {
     fn test_handle_escape_quits() {
         let mut app = App::new().unwrap();
         app.is_running = true;
-        app.handle_key(Key::plain(KeyCode::Esc)).unwrap();
+        app.handle_key(KeyEvent::plain(KeyCode::Esc)).unwrap();
         assert!(!app.is_running);
         assert!(app.should_quit());
     }
@@ -213,7 +191,7 @@ mod tests {
     fn test_handle_ctrl_q_force_quits() {
         let mut app = App::new().unwrap();
         app.is_running = true;
-        app.handle_key(Key::ctrl('q')).unwrap();
+        app.handle_key(KeyEvent::ctrl('q')).unwrap();
         assert!(!app.is_running);
         assert!(app.should_quit());
     }
@@ -222,7 +200,7 @@ mod tests {
     fn test_handle_ctrl_c_force_quits() {
         let mut app = App::new().unwrap();
         app.is_running = true;
-        app.handle_key(Key::ctrl('c')).unwrap();
+        app.handle_key(KeyEvent::ctrl('c')).unwrap();
         assert!(!app.is_running);
         assert!(app.should_quit());
     }
@@ -231,8 +209,8 @@ mod tests {
     fn test_insert_ctrl_j_enters_normal_mode() {
         let mut app = App::new().unwrap();
         app.is_running = true;
-        app.mode = Mode::Insert;
-        app.handle_key(Key::ctrl('j')).unwrap();
-        assert_eq!(app.mode, Mode::Normal);
+        app.input.mode = InputMode::Insert;
+        app.handle_key(KeyEvent::ctrl('j')).unwrap();
+        assert_eq!(app.input.mode, InputMode::Normal);
     }
 }

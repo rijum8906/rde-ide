@@ -4,7 +4,7 @@ use crate::panel::PanelType;
 
 /// User layout state controlling which panels are visible and fullscreen mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct LayoutStates {
+pub struct Layout {
     pub screen_size: (u16, u16),
     pub left_panel_open: bool,
     pub right_panel_open: bool,
@@ -12,7 +12,7 @@ pub struct LayoutStates {
     pub mode: LayoutMode,
 }
 
-impl Default for LayoutStates {
+impl Default for Layout {
     fn default() -> Self {
         Self {
             screen_size: (0, 0),

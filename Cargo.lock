@@ -378,6 +378,8 @@ dependencies = [
 name = "domain"
 version = "0.1.0"
 dependencies = [
+ "editor-core",
+ "ratatui",
  "tempfile",
  "thiserror 2.0.21",
 ]
@@ -401,6 +403,7 @@ version = "0.1.0"
 dependencies = [
  "crossterm",
  "smallvec",
+ "tui",
 ]
 
 [[package]]
@@ -1746,7 +1749,6 @@ version = "0.1.0"
 dependencies = [
  "color-eyre",
  "crossterm",
- "domain",
  "ratatui",
  "thiserror 2.0.21",
 ]

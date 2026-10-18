@@ -19,17 +19,17 @@ const FILE_PREFIX: &str = "  ";
 
 /// Side-panel widget.
 #[derive(Debug)]
-pub struct LeftPanel<'a> {
+pub struct LeftPanelWidget<'a> {
     view: &'a LeftPanelView,
 }
 
-impl<'a> LeftPanel<'a> {
+impl<'a> LeftPanelWidget<'a> {
     pub fn new(view: &'a LeftPanelView) -> Self {
         Self { view }
     }
 }
 
-impl StatefulWidget for LeftPanel<'_> {
+impl StatefulWidget for LeftPanelWidget<'_> {
     type State = LeftPanelState;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut LeftPanelState) {
@@ -58,7 +58,7 @@ impl StatefulWidget for LeftPanel<'_> {
     }
 }
 
-impl LeftPanel<'_> {
+impl LeftPanelWidget<'_> {
     fn render_title(&self, area: Rect, buf: &mut Buffer) {
         let y = area.y;
         let max_x = area.x + area.width;

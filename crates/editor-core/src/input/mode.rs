@@ -4,7 +4,7 @@
 use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub enum Mode {
+pub enum InputMode {
     #[default]
     Normal,
     Insert,
@@ -13,7 +13,7 @@ pub enum Mode {
     Command, // ":wq" style
 }
 
-impl Mode {
+impl InputMode {
     /// Returns uppercase string representation used in status line badges.
     pub const fn as_str(&self) -> &'static str {
         match self {
@@ -36,7 +36,7 @@ impl Mode {
     }
 }
 
-impl fmt::Display for Mode {
+impl fmt::Display for InputMode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.as_str())
     }
@@ -48,11 +48,11 @@ mod tests {
 
     #[test]
     fn test_mode_display_and_as_str() {
-        assert_eq!(Mode::Normal.as_str(), "NORMAL");
-        assert_eq!(Mode::Insert.as_str(), "INSERT");
-        assert_eq!(Mode::Visual.as_str(), "VISUAL");
-        assert_eq!(Mode::VisualLine.as_str(), "VISUAL LINE");
-        assert_eq!(Mode::Command.as_str(), "COMMAND");
-        assert_eq!(format!("{}", Mode::Insert), "INSERT");
+        assert_eq!(InputMode::Normal.as_str(), "NORMAL");
+        assert_eq!(InputMode::Insert.as_str(), "INSERT");
+        assert_eq!(InputMode::Visual.as_str(), "VISUAL");
+        assert_eq!(InputMode::VisualLine.as_str(), "VISUAL LINE");
+        assert_eq!(InputMode::Command.as_str(), "COMMAND");
+        assert_eq!(format!("{}", InputMode::Insert), "INSERT");
     }
 }

@@ -3,12 +3,12 @@ use crate::{
     input::{
         key::{Key, KeyCode, KeyExt},
         keymap::Keymap,
-        mode::Mode,
+        mode::InputMode,
     },
 };
 
 pub(super) fn default_command_line_keymap(keymap: &mut Keymap) -> &mut Keymap {
-    let command = Mode::Command;
+    let command = InputMode::Command;
     keymap.bind(
         command,
         vec![Key::plain(KeyCode::Esc)],

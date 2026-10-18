@@ -15,7 +15,7 @@ use smallvec::SmallVec;
 use crate::command::command::Command;
 use crate::input::key::Key;
 use crate::input::keymap::Keymap;
-use crate::input::mode::Mode;
+use crate::input::mode::InputMode;
 
 /// How long to wait for the next key before giving up on a partial sequence.
 ///
@@ -55,7 +55,7 @@ pub struct Resolver {
     pending_since: Option<Instant>,
     /// Mode the pending sequence started in. If the mode changes mid-sequence,
     /// the pending state is dropped.
-    pending_mode: Option<Mode>,
+    pending_mode: Option<InputMode>,
     /// If the current pending sequence is *also* a complete binding (e.g.
     /// `g` is bound to something AND is a prefix of `gg`), remember the
     /// exact match so we can fire it on timeout.
@@ -116,7 +116,7 @@ impl Resolver {
     /// Feed a key.
     ///
     /// See `ResolveResult` for the four possible outcomes.
-    pub fn feed(&mut self, mode: Mode, key: Key, keymap: &Keymap) -> ResolveResult {
+    pub fn feed(&mut self, mode: InputMode, key: Key, keymap: &Keymap) -> ResolveResult {
         // 1. Mode change invalidates any in-flight sequence.
         if let Some(prev) = self.pending_mode {
             if prev != mode {

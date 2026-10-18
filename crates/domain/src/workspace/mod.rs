@@ -95,12 +95,11 @@ impl WorkspaceState {
             return Err(DomainError::UnsupportedPath { path: path_buf });
         }
 
-        let path_buf = std::fs::canonicalize(&path_buf).map_err(|source| {
-            DomainError::CannotReadFile {
+        let path_buf =
+            std::fs::canonicalize(&path_buf).map_err(|source| DomainError::CannotReadFile {
                 path: path_buf.clone(),
                 source,
-            }
-        })?;
+            })?;
 
         if meta.is_file() {
             let root_dir = path_buf

@@ -13,17 +13,17 @@ use crate::viewmodel::bottom_bar::{BottomBarMode, BottomBarView};
 /// Bottom bar widget. Renders either the status line or the command-line
 /// editor, depending on `view.mode`.
 #[derive(Debug)]
-pub struct BottomBar<'a> {
+pub struct BottomBarWidget<'a> {
     view: &'a BottomBarView,
 }
 
-impl<'a> BottomBar<'a> {
+impl<'a> BottomBarWidget<'a> {
     pub fn new(view: &'a BottomBarView) -> Self {
         Self { view }
     }
 }
 
-impl StatefulWidget for BottomBar<'_> {
+impl StatefulWidget for BottomBarWidget<'_> {
     type State = BottomBarState;
 
     fn render(self, area: Rect, buf: &mut RatBuffer, state: &mut BottomBarState) {

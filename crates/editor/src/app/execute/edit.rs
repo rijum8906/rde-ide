@@ -3,10 +3,10 @@ use domain::{
     workspace::WorkspaceState,
 };
 use std::ops::Range;
-use tui::state::editor_panel::EditorState;
+use tui::state::editor_panel::EditorPanelState;
 // Assuming EditorState is imported or defined in your crate
 
-pub fn delete_line(wss: &mut WorkspaceState, eps: &mut EditorState) -> DomainResult<()> {
+pub fn delete_line(wss: &mut WorkspaceState, eps: &mut EditorPanelState) -> DomainResult<()> {
     if let Some(buffer) = wss.active_buffer_mut() {
         let line_count = buffer.line_count();
         if line_count == 0 {

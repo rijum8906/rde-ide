@@ -1,9 +1,9 @@
-use crate::input::mode::Mode;
+use crate::input::mode::InputMode;
 
 /// Mode transitions.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ModeCommand {
-    Enter(Mode),
+    Enter(InputMode),
     ExitToNormal,
     InsertBefore,
     InsertAfter,
