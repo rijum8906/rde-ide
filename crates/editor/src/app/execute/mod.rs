@@ -12,7 +12,7 @@ impl App {
     pub fn execute(&mut self, cmd: Command) -> Result<()> {
         match cmd {
             Command::Session(session_command) => self.handle_session_command(session_command),
-            Command::Navigation(navigation_command) => {
+            Command::Workspace(navigation_command) => {
                 self.handle_navigation_command(navigation_command)
             }
             Command::Motion(motion) => self.handle_motion_command(motion),

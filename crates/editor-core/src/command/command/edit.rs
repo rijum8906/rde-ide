@@ -1,4 +1,4 @@
-use crate::command::command::Motion;
+use crate::command::command::MotionCommand;
 
 /// Editing the buffer contents.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -14,9 +14,9 @@ pub enum EditCommand {
     DeleteToFileEnd,
 
     // Motion-prefixed variants.
-    DeleteMotion(Motion),
-    ChangeMotion(Motion),
-    YankMotion(Motion),
+    DeleteMotion(MotionCommand),
+    ChangeMotion(MotionCommand),
+    YankMotion(MotionCommand),
 
     // Clipboard.
     Yank,

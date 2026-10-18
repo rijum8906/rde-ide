@@ -1,4 +1,4 @@
-use domain::workspace::{WorkspaceState, file_tree::scan_dir};
+use domain::workspace::{file_tree::scan_dir, WorkspaceState};
 use tui::viewmodel::{
     bottom_bar::{BottomBarMode, BottomBarView},
     editor_panel::{EditorPanelView, LineView},
@@ -43,7 +43,10 @@ impl App {
             mode_label: self.mode.as_str(),
             file_name,
             is_dirty,
-            cursor: (1, 1),
+            cursor: (
+                self.widget_states.editor_panel.cursor_col,
+                self.widget_states.editor_panel.cursor_line,
+            ),
             line_count,
             message: None,
             message_kind: None,

@@ -2,11 +2,11 @@ use domain::error::DomainResult;
 use editor_core::command::command::EditCommand;
 
 use crate::app::{
-    App,
     execute::{
         edit::delete_line,
         text::{delete, insert_char, insert_new_line},
     },
+    App,
 };
 
 impl App {
@@ -27,7 +27,7 @@ impl App {
                 delete_line(&mut self.workspace, &mut self.widget_states.editor_panel)?;
             }
             EditCommand::DeleteToFileEnd => todo!(),
-            EditCommand::DeleteMotion(motion) => todo!(),
+            EditCommand::DeleteMotion(motion) => {}
             EditCommand::ChangeMotion(motion) => todo!(),
             EditCommand::YankMotion(motion) => todo!(),
             EditCommand::Yank => todo!(),

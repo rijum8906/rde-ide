@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-  "apps/ide",
+  "apps/ide", "crates/config",
   "crates/domain",
   "crates/editor",
   "crates/editor-core",

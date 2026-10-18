@@ -60,7 +60,7 @@ impl App {
     pub fn new() -> Result<Self> {
         Ok(Self {
             workspace: WorkspaceState::from_path(
-                "/home/rijum/Projects/rde-ide/apps/ide/src/main.rs",
+                "/home/rijum/Projects/rde-ide/apps/ide/Cargo.toml",
             )?,
             mode: Mode::Normal,
             key_map: Keymap::default(),

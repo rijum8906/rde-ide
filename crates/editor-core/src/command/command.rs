@@ -5,39 +5,39 @@ pub mod edit;
 pub mod layout;
 pub mod mode;
 pub mod motion;
-pub mod navigation;
 pub mod session;
+pub mod workspace;
 
 pub use command_line::CommandLineCommand;
 pub use edit::EditCommand;
 pub use layout::LayoutCommand;
 pub use mode::ModeCommand;
-pub use motion::Motion;
-pub use navigation::NavigationCommand;
+pub use motion::MotionCommand;
 pub use session::SessionCommand;
+pub use workspace::WorkspaceCommand;
 
 /// The top-level command type. Every action the editor can take is one
 /// of these variants.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Command {
-    /// Application lifecycle: quit, save, open.
+    /// Application lifecycle: quit, save, open files.
     Session(SessionCommand),
 
-    /// Tab and buffer navigation.
-    Navigation(NavigationCommand),
+    /// Workspace, tab, and buffer management.x
+    Workspace(WorkspaceCommand),
 
-    /// Cursor movement.
-    Motion(Motion),
+    /// In-buffer cursor movement and text motions.
+    Motion(MotionCommand),
 
-    /// Mode transitions (Normal/Insert/Visual/Command).
+    /// Mode transitions (Normal, Insert, Visual, etc.).
     Mode(ModeCommand),
 
-    /// Layout changes (fullscreen, panel visibility).
+    /// Layout changes (splits, panel visibility, fullscreen).
     Layout(LayoutCommand),
 
-    /// Editing the buffer.
+    /// Mutating text in the buffer (insert, delete, undo/redo).
     Edit(EditCommand),
 
-    /// Command-line editing.
+    /// Command-line mode inputs and prompts.
     CommandLine(CommandLineCommand),
 }

@@ -5,11 +5,11 @@ use editor_core::{
 };
 
 use crate::app::{
-    App,
     execute::{
         goto::{goto_line_end, move_cursor_right, move_cursor_up},
         text::insert_new_line,
     },
+    App,
 };
 
 impl App {

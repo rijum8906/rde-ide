@@ -2,7 +2,6 @@
 
 pub use crossterm::event::{
     KeyCode, KeyEvent, KeyEvent as Key, KeyEventKind, KeyEventState, KeyModifiers,
-    KeyModifiers as Modifiers,
 };
 
 /// Helper to create a plain key event with no modifiers.
@@ -60,7 +59,6 @@ pub const fn alt(c: char) -> KeyEvent {
         state: KeyEventState::empty(),
     }
 }
-
 
 /// Extension trait providing associated constructor functions and helpers on `Key`/`KeyEvent`.
 pub trait KeyExt {

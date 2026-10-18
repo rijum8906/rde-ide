@@ -1,7 +1,7 @@
 /// Cursor movement. Every variant is a pure `(line, col) -> new_pos`
 /// operation, applied within the current buffer.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Motion {
+pub enum MotionCommand {
     // Single-step.
     Left,
     Right,

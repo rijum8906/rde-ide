@@ -3,8 +3,8 @@ use ratatui::Frame;
 use tui::{
     constant::{MIN_SCREEN_HEIGHT, MIN_SCREEN_WIDTH},
     widgets::{
-        Size, WidgetGeometry, bottom_bar::BottomBar, editor_panel::EditorPanel,
-        left_panel::LeftPanel, screen_too_small::ScreenTooSmall, top_bar::TopBar,
+        bottom_bar::BottomBar, editor_panel::EditorPanel, left_panel::LeftPanel,
+        screen_too_small::ScreenTooSmall, top_bar::TopBar, Size, WidgetGeometry,
     },
 };
 

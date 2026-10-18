@@ -1,8 +1,7 @@
 use domain::error::{IdeError, Result};
 use editor::app::App;
 
-#[tokio::main(flavor = "current_thread")]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     // Initialize Ratatui terminal abstraction
     let mut terminal = ratatui::init();
 
@@ -24,3 +23,4 @@ async fn main() -> Result<()> {
     result?;
     Ok(())
 }
+
