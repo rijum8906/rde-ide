@@ -4,7 +4,7 @@ pub(crate) mod goto;
 pub(crate) mod text;
 
 use domain::error::Result;
-use editor_core::command::command::Command;
+use editor_core::command::Command;
 
 use crate::app::App;
 

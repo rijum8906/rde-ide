@@ -1,4 +1,4 @@
-use editor_core::command::command::CommandLineCommand;
+use editor_core::command::CommandLineCommand;
 
 use crate::app::App;
 

@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use super::key::Key;
 use super::mode::InputMode;
-use crate::command::command::Command;
+use crate::command::Command;
 use crate::input::keymap::command_line::default_command_line_keymap;
 use crate::input::keymap::edit::default_edit_keymap;
 use crate::input::keymap::layout::default_layout_keymap;
@@ -107,7 +107,7 @@ pub fn default_keymap() -> Keymap {
 mod tests {
     use super::*;
     use crate::{
-        command::command::{
+        command::{
             Command,
             LayoutCommand::ToggleLeftPanel,
             ModeCommand::{ExitToNormal, InsertAtLineEnd, InsertAtLineStart},

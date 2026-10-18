@@ -1,5 +1,5 @@
 use crate::{
-    command::command::{
+    command::{
         Command,
         MotionCommand::{Down, FileEnd, FileStart, Left, LineEnd, LineStart, Right, Up},
     },

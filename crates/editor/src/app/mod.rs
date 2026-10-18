@@ -9,7 +9,7 @@ use std::time::Duration;
 use crossterm::event::{self, Event, KeyEvent};
 use domain::{error::Result, workspace::WorkspaceState};
 use editor_core::{
-    command::command::{Command, CommandLineCommand::Push, EditCommand::InsertChar},
+    command::{Command, CommandLineCommand::Push, EditCommand::InsertChar},
     input::{Input, mode::InputMode, resolver::ResolveResult},
     ui::Ui,
 };
@@ -158,7 +158,7 @@ impl App {
 mod tests {
     use super::*;
     use editor_core::{
-        command::command::SessionCommand::Quit,
+        command::SessionCommand::Quit,
         input::key::{KeyCode, KeyExt},
     };
 

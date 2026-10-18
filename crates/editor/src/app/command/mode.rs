@@ -1,6 +1,6 @@
 use domain::error::DomainResult;
 use editor_core::{
-    command::command::ModeCommand::{self},
+    command::ModeCommand::{self},
     input::mode::InputMode,
 };
 

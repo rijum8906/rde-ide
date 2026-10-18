@@ -12,7 +12,7 @@ use std::time::{Duration, Instant};
 
 use smallvec::SmallVec;
 
-use crate::command::command::Command;
+use crate::command::Command;
 use crate::input::key::Key;
 use crate::input::keymap::Keymap;
 use crate::input::mode::InputMode;

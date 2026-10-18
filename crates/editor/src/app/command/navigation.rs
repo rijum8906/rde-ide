@@ -1,4 +1,4 @@
-use editor_core::command::command::WorkspaceCommand;
+use editor_core::command::WorkspaceCommand;
 
 use crate::app::App;
 

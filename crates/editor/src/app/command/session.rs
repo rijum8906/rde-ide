@@ -1,4 +1,4 @@
-use editor_core::command::command::SessionCommand;
+use editor_core::command::SessionCommand;
 
 use crate::app::App;
 

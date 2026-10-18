@@ -1,5 +1,5 @@
 use crate::{
-    command::command::{Command, CommandLineCommand},
+    command::{Command, CommandLineCommand},
     input::{
         key::{Key, KeyCode, KeyExt},
         keymap::Keymap,

@@ -1,4 +1,4 @@
-use editor_core::command::command::MotionCommand;
+use editor_core::command::MotionCommand;
 
 use crate::app::{
     App,

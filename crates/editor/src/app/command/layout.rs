@@ -1,4 +1,4 @@
-use editor_core::command::command::LayoutCommand;
+use editor_core::command::LayoutCommand;
 
 use crate::app::App;
 

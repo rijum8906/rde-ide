@@ -1,5 +1,5 @@
 use domain::error::DomainResult;
-use editor_core::command::command::EditCommand;
+use editor_core::command::EditCommand;
 
 use crate::app::{
     App,
