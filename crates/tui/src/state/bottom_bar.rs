@@ -1,56 +1,13 @@
 //! Persistent state for the bottom bar and command palette.
 //!
-//! Owns the command-line input buffer, its cursor, the command history, and
-//! any transient status message with an expiry timestamp. Everything else
-//! displayed by the bottom bar or the palette is passed in as view-model data
-//! each frame.
+//! Owns the command-line input buffer, its cursor, and the command history.
+//! Everything else displayed by the bottom bar or the palette is passed in as
+//! view-model data each frame; transient messages live in [`crate::state::toast`].
 //!
 //! The command line is character-indexed (`command_cursor` counts chars, not
 //! bytes) so multi-byte input edits correctly.
 
-use std::time::{Duration, Instant};
-
-/// Severity of a status message. Affects color.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MessageKind {
-    Info,
-    Warning,
-    Error,
-}
-
-/// A transient message shown on the status line.
-#[derive(Debug, Clone)]
-pub struct StatusMessage {
-    pub text: String,
-    pub kind: MessageKind,
-    /// When the message was set. Used to expire it.
-    pub since: Instant,
-    /// How long the message stays visible.
-    pub ttl: Duration,
-}
-
-impl StatusMessage {
-    pub fn new(text: impl Into<String>, kind: MessageKind) -> Self {
-        Self {
-            text: text.into(),
-            kind,
-            since: Instant::now(),
-            ttl: Duration::from_secs(3),
-        }
-    }
-
-    pub fn with_ttl(mut self, ttl: Duration) -> Self {
-        self.ttl = ttl;
-        self
-    }
-
-    pub fn is_expired(&self, now: Instant) -> bool {
-        now.duration_since(self.since) >= self.ttl
-    }
-}
-
-/// Bottom-bar state: command-line buffer, cursor within it, command history,
-/// and a transient status message.
+/// Bottom-bar state: command-line buffer, cursor within it, command history.
 #[derive(Debug, Default)]
 pub struct BottomBarState {
     /// Text typed into `:` command mode. Empty when not in command mode.
@@ -70,9 +27,6 @@ pub struct BottomBarState {
     /// The in-progress line saved before browsing history, restored when the
     /// user moves past the newest entry.
     pub history_draft: String,
-
-    /// Currently visible transient message, if any.
-    pub message: Option<StatusMessage>,
 }
 
 /// Maximum number of remembered command lines.
@@ -220,39 +174,6 @@ impl BottomBarState {
 
     fn cursor_byte_index(&self) -> usize {
         self.byte_index_at_char(self.command_cursor)
-    }
-
-    // --- Status message ---------------------------------------------------
-
-    /// Show a message, replacing any current one.
-    pub fn set_message(&mut self, text: impl Into<String>, kind: MessageKind) {
-        self.message = Some(StatusMessage::new(text, kind));
-    }
-
-    pub fn info(&mut self, text: impl Into<String>) {
-        self.set_message(text, MessageKind::Info);
-    }
-
-    pub fn warn(&mut self, text: impl Into<String>) {
-        self.set_message(text, MessageKind::Warning);
-    }
-
-    pub fn error(&mut self, text: impl Into<String>) {
-        self.set_message(text, MessageKind::Error);
-    }
-
-    /// Clear any current message.
-    pub fn clear_message(&mut self) {
-        self.message = None;
-    }
-
-    /// Expire the message if its TTL has passed. Call once per frame.
-    pub fn poll_message_expiry(&mut self, now: Instant) {
-        if let Some(msg) = &self.message {
-            if msg.is_expired(now) {
-                self.message = None;
-            }
-        }
     }
 }
 

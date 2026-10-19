@@ -8,4 +8,7 @@ pub mod bottom_bar;
 pub mod command_palette;
 pub mod editor_panel;
 pub mod left_panel;
+pub mod level;
+pub mod notification;
+pub mod toast;
 pub mod top_bar;

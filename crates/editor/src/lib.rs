@@ -8,4 +8,6 @@
 //!   operations those handlers reuse.
 
 pub mod execute;
+pub mod notification;
+
 pub(crate) mod mutation;

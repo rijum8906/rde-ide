@@ -7,7 +7,7 @@ use ratatui::{
     widgets::StatefulWidget,
 };
 
-use crate::state::bottom_bar::{BottomBarState, MessageKind};
+use crate::state::bottom_bar::BottomBarState;
 use crate::viewmodel::bottom_bar::{BottomBarMode, BottomBarView};
 
 /// Bottom bar widget. Renders either the status line or the command-line
@@ -95,21 +95,6 @@ fn render_status(view: &BottomBarView, area: Rect, buf: &mut RatBuffer) {
             // Fall back to inline if the bar is too narrow.
             let _ = write_str(buf, x, y, max_x, &position_text, position_style());
         }
-    }
-
-    // If we have a status message, override the middle of the bar.
-    if let Some(msg) = &view.message {
-        let msg_style = match view.message_kind {
-            Some(MessageKind::Error) => message_error_style(),
-            Some(MessageKind::Warning) => message_warning_style(),
-            _ => message_info_style(),
-        };
-
-        // Draw it starting a bit after the filename, clipped.
-        let msg_start = (area.x + area.width / 3).min(max_x);
-        let available = max_x.saturating_sub(msg_start);
-        let text: String = msg.chars().take(available as usize).collect();
-        write_str(buf, msg_start, y, max_x, &text, msg_style);
     }
 
     // Fill any remaining space with base background.
@@ -222,26 +207,6 @@ fn position_style() -> Style {
     Style::default()
         .fg(Color::Rgb(140, 140, 140))
         .bg(Color::Rgb(30, 30, 30))
-}
-
-fn message_info_style() -> Style {
-    Style::default()
-        .fg(Color::Rgb(160, 220, 160))
-        .bg(Color::Rgb(30, 30, 30))
-}
-
-fn message_warning_style() -> Style {
-    Style::default()
-        .fg(Color::Rgb(230, 180, 80))
-        .bg(Color::Rgb(30, 30, 30))
-        .add_modifier(Modifier::BOLD)
-}
-
-fn message_error_style() -> Style {
-    Style::default()
-        .fg(Color::Rgb(240, 120, 120))
-        .bg(Color::Rgb(30, 30, 30))
-        .add_modifier(Modifier::BOLD)
 }
 
 fn command_prefix_style() -> Style {

@@ -11,7 +11,15 @@ pub(super) mod bottom_bar;
 pub(super) mod command_palette;
 pub(super) mod editor_panel;
 pub(super) mod left_panel;
+pub(super) mod notification;
+pub(super) mod toast;
 pub(super) mod top_bar;
+
+/// Draw the floating notification stack over the current frame.
+pub use notification::render_notifications;
+
+/// Draw the toast over the current frame.
+pub use toast::render_toast;
 
 use domain::{
     error::{IdeError, Result},

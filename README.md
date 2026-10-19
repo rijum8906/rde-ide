@@ -20,6 +20,10 @@ TUI only renders state.
   caret movement, history, and `:w`/`:q`/`:wq`-style ex commands.
 - **Ratatui rendering** — tab bar, editor panel with gutter and cursor,
   file-tree side panel, and a status line.
+- **Floating feedback** — stacked top-centre notifications and a top-right
+  toast, each with a level (info, success, warning, error, panic), header, and
+  wrapped body text. Command results such as `E492: Not an editor command`
+  appear as an error toast.
 
 ## Requirements
 

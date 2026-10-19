@@ -1,8 +1,7 @@
 //! View-model data passed to the bottom bar each frame.
 //!
 //! All of this is derived from the app state; none of it is persistent.
-
-use crate::state::bottom_bar::MessageKind;
+//! Transient messages are shown by the toast widget instead.
 
 /// Which layout the bottom bar is drawn in.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -27,9 +26,6 @@ pub struct BottomBarView {
     pub cursor: (usize, usize),
     /// Total line count for display: "line / total".
     pub line_count: usize,
-    /// Current status message text, if any.
-    pub message: Option<String>,
-    pub message_kind: Option<MessageKind>,
     /// Left-side hint text (e.g. "-- NORMAL --" or a key hint).
     pub hint: Option<String>,
 }
@@ -43,8 +39,6 @@ impl Default for BottomBarView {
             is_dirty: false,
             cursor: (1, 1),
             line_count: 1,
-            message: None,
-            message_kind: None,
             hint: None,
         }
     }

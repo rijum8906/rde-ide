@@ -5,10 +5,14 @@
 //! also holds the [`Widgets`] aggregate and the helpers used to size panels.
 
 pub mod bottom_bar;
+pub(crate) mod card;
 pub mod command_palette;
 pub mod editor_panel;
 pub mod left_panel;
+pub mod notification;
 pub mod screen_too_small;
+pub(crate) mod text;
+pub mod toast;
 pub mod top_bar;
 
 use ratatui::layout::Rect;
@@ -18,7 +22,7 @@ use crate::{
     layout::Layout,
     state::{
         bottom_bar::BottomBarState, editor_panel::EditorPanelState, left_panel::LeftPanelState,
-        top_bar::TopBarState,
+        toast::ToastState, top_bar::TopBarState,
     },
 };
 
@@ -65,6 +69,7 @@ pub struct Widgets {
     pub bottom_bar: BottomBar,
     pub left_panel: LeftPanel,
     pub editor_panel: EditorPanel,
+    pub toast: Toast,
 }
 
 #[derive(Debug, Default)]
@@ -90,4 +95,11 @@ pub struct LeftPanel {
 pub struct EditorPanel {
     pub state: EditorPanelState,
     pub geometry: Rect,
+}
+
+/// Toast state. Its rect depends on the wrapped body, so it is sized at
+/// render time rather than here.
+#[derive(Debug, Default)]
+pub struct Toast {
+    pub state: ToastState,
 }

@@ -40,16 +40,6 @@ fn build_bottom_bar_view(
         None => ("[No Name]".to_string(), false, 1),
     };
 
-    // Messages are owned by the widget state and expire on their own.
-    ui.widgets
-        .bottom_bar
-        .state
-        .poll_message_expiry(std::time::Instant::now());
-    let (message, message_kind) = match &ui.widgets.bottom_bar.state.message {
-        Some(msg) => (Some(msg.text.clone()), Some(msg.kind)),
-        None => (None, None),
-    };
-
     BottomBarView {
         mode: BottomBarMode::Status,
         mode_label: input_mode.as_str(),
@@ -61,8 +51,6 @@ fn build_bottom_bar_view(
             ui.widgets.editor_panel.state.cursor_col + 1,
         ),
         line_count,
-        message,
-        message_kind,
         hint: None,
     }
 }

@@ -13,7 +13,7 @@
 //! | `:e <path>` | Open `path` (relative to the workspace root) |
 //! | `:bn`, `:bp` | Switch to the next/previous buffer |
 //!
-//! Anything else reports `E492` on the status line.
+//! Anything else shows an error toast.
 
 use std::path::PathBuf;
 
@@ -116,7 +116,10 @@ fn run_ex(ws: &mut WorkspaceState, ui: &mut Ui, line: &str) -> Effect {
         }
 
         other => {
-            error(ui, format!("E492: Not an editor command: {other}"));
+            ui.widgets.toast.state.error(
+                "Command not found",
+                format!("E492: Not an editor command: {other}"),
+            );
             Effect::None
         }
     }
@@ -149,7 +152,7 @@ fn save(ws: &mut WorkspaceState, ui: &mut Ui, path: Option<&str>) -> bool {
             None => buffer.save(),
         },
         None => {
-            error(ui, "E32: No buffer to write");
+            error(ui, "Cannot save", "E32: No buffer to write");
             return false;
         }
     };
@@ -160,15 +163,15 @@ fn save(ws: &mut WorkspaceState, ui: &mut Ui, path: Option<&str>) -> bool {
                 .active_buffer()
                 .map(|buffer| (buffer.display_name().to_string(), buffer.line_count()))
                 .unwrap_or_default();
-            info(ui, format!("\"{name}\" {lines}L written"));
+            success(ui, "Saved", format!("\"{name}\" {lines}L written"));
             true
         }
         Err(DomainError::NoPath) => {
-            error(ui, "E32: No file name (use :w <path>)");
+            error(ui, "Cannot save", "E32: No file name (use :w <path>)");
             false
         }
         Err(err) => {
-            error(ui, format!("E212: Can't write file: {err}"));
+            error(ui, "Cannot save", format!("E212: Can't write file: {err}"));
             false
         }
     }
@@ -177,7 +180,11 @@ fn save(ws: &mut WorkspaceState, ui: &mut Ui, path: Option<&str>) -> bool {
 /// Quit unless a buffer is dirty and the user did not force it.
 fn quit(ws: &WorkspaceState, ui: &mut Ui, force: bool) -> Effect {
     if !force && ws.has_unsaved_changes() {
-        error(ui, "E37: No write since last change (add ! to override)");
+        error(
+            ui,
+            "Cannot quit",
+            "E37: No write since last change (add ! to override)",
+        );
         Effect::None
     } else {
         Effect::Quit
@@ -187,7 +194,7 @@ fn quit(ws: &WorkspaceState, ui: &mut Ui, force: bool) -> Effect {
 /// Open a file, resolved relative to the workspace root.
 fn edit(ws: &mut WorkspaceState, ui: &mut Ui, arg: Option<&str>) {
     let Some(arg) = arg else {
-        error(ui, "E32: No file name");
+        error(ui, "Cannot open", "E32: No file name");
         return;
     };
 
@@ -199,16 +206,20 @@ fn edit(ws: &mut WorkspaceState, ui: &mut Ui, arg: Option<&str>) {
                 .active_buffer()
                 .map(|buffer| buffer.display_name().to_string())
                 .unwrap_or_default();
-            info(ui, format!("\"{name}\""));
+            info(ui, "Opened", format!("\"{name}\""));
         }
-        Err(err) => error(ui, format!("E484: Can't open file {arg}: {err}")),
+        Err(err) => error(
+            ui,
+            "Cannot open",
+            format!("E484: Can't open file {arg}: {err}"),
+        ),
     }
 }
 
 /// Switch to the next or previous buffer and reset the viewport.
 fn switch_buffer(ws: &mut WorkspaceState, ui: &mut Ui, forward: bool) {
     if ws.buffer_count() < 2 {
-        info(ui, "E85: Only one buffer");
+        warning(ui, "No other buffer", "E85: Only one buffer");
         return;
     }
 
@@ -242,19 +253,27 @@ fn reset_editor_view(ws: &WorkspaceState, ui: &mut Ui) {
     state.set_line_count(line_count);
 }
 
-fn info(ui: &mut Ui, text: impl Into<String>) {
-    ui.widgets.bottom_bar.state.info(text);
+fn info(ui: &mut Ui, header: &str, body: impl Into<String>) {
+    ui.widgets.toast.state.info(header, body);
 }
 
-fn error(ui: &mut Ui, text: impl Into<String>) {
-    ui.widgets.bottom_bar.state.error(text);
+fn success(ui: &mut Ui, header: &str, body: impl Into<String>) {
+    ui.widgets.toast.state.success(header, body);
+}
+
+fn warning(ui: &mut Ui, header: &str, body: impl Into<String>) {
+    ui.widgets.toast.state.warning(header, body);
+}
+
+fn error(ui: &mut Ui, header: &str, body: impl Into<String>) {
+    ui.widgets.toast.state.error(header, body);
 }
 
 #[cfg(test)]
 mod tests {
     use super::{Effect, run_ex, split_ex};
     use domain::{buffer::Buffer, workspace::WorkspaceState};
-    use tui::ui::Ui;
+    use tui::{ui::Ui, viewmodel::level::Level};
 
     fn workspace() -> WorkspaceState {
         let mut ws = WorkspaceState::new(".");
@@ -300,7 +319,10 @@ mod tests {
         let mut ui = Ui::default();
 
         assert_eq!(run_ex(&mut ws, &mut ui, "q"), Effect::None);
-        assert!(ui.widgets.bottom_bar.state.message.is_some());
+        let toast = ui.widgets.toast.state.visible().expect("error toast");
+        assert_eq!(toast.level, Level::Error);
+        assert_eq!(toast.header, "Cannot quit");
+        assert!(toast.body.contains("E37"));
     }
 
     #[test]
@@ -309,7 +331,9 @@ mod tests {
         let mut ui = Ui::default();
 
         assert_eq!(run_ex(&mut ws, &mut ui, "frobnicate"), Effect::None);
-        let message = ui.widgets.bottom_bar.state.message.as_ref().unwrap();
-        assert!(message.text.contains("E492"));
+        let toast = ui.widgets.toast.state.visible().expect("error toast");
+        assert_eq!(toast.level, Level::Error);
+        assert_eq!(toast.header, "Command not found");
+        assert!(toast.body.contains("E492"));
     }
 }

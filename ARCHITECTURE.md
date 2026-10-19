@@ -244,6 +244,14 @@ pub struct Ui {
    - `render_editor_panel` — gutter, lines, current-line highlight, cursor;
    - `render_command_palette` — modal command editor, only in command mode.
 
+Notifications and toasts are drawn by the app shell rather than
+`render_into`: `App::render` draws the layout first, then the notification
+stack in the top-centre (when `notifications.visible()` is non-empty), then
+the toast in the top-right (when `ui.widgets.toast.state.visible()` is some).
+`render_notifications` returns the row just past the last card, and the toast
+starts one row below it so the two never overlap. The bottom bar no longer
+carries messages.
+
 ### Command palette
 
 In command mode `render/command_palette.rs` centers a 72-column card in the
@@ -252,6 +260,36 @@ with a rounded border, title, drop shadow, and key-hint footer. The widget borro
 the command text and caret from `BottomBarState` (both measured in
 characters), scrolls the input horizontally so the caret stays visible, and
 draws the caret as an inverted cell.
+
+### Notifications
+
+`editor::notification` owns the data: a `Notification` pairs a `Level` with a
+`NotificationBody` (header + body) and a TTL. `Notifications` keeps the newest
+`DEFAULT_CAPACITY` items, drops expired ones in `tick`, and returns the live
+ones from `visible()`. The module converts each notification into the TUI's
+`NotificationView` (borrowed, so rendering copies no text).
+
+`tui::render::notification::render_notifications` reserves a top-centre
+region (44 columns max, 2-cell margin) and `widgets/notification.rs` stacks
+rounded cards there: a coloured icon and bold header with a right-aligned
+level label, and a wrapped body clamped to three lines with an ellipsis.
+Cards that do not fit are skipped.
+
+### Toasts
+
+A toast is the transient result of a command (`:w` succeeded, `:q` refused, an
+unknown ex command). The data lives in `tui::state::toast`: `ToastState` holds
+at most one `ToastMessage` with a `Level`, header, body, and TTL; a new toast
+replaces the old one, and `App::tick` calls `poll_expiry`. Command handlers
+call `ui.widgets.toast.state.error(header, body)` (or `info`/`success`/
+`warning`) instead of setting a status-line message.
+
+`tui::render::toast::render_toast` measures the card (3 rows plus up to two
+body lines) and anchors it in the top-right corner, two columns from the edge
+and two rows from the top, or one row below the notification stack when one
+is visible. `widgets/toast.rs` renders through the same `widgets/card.rs` used
+by notifications, so both share the border, level icon/label, and wrapping
+code; toasts just keep their body to two lines instead of three.
 
 ### State vs. view model
 
@@ -340,8 +378,8 @@ return `Result`. `?` converts `DomainError` into `IdeError`.
 
 Two intentional gaps: `handle_session_command` ignores the result of
 `buffer.save()` (`let _ =`), and `render_into` discards the screen-size error
-after switching to the fallback widget. Surfacing these through the status
-line is planned.
+after switching to the fallback widget. Surfacing these through a toast is
+planned.
 
 ## Testing
 
@@ -349,9 +387,10 @@ line is planned.
   module they exercise.
 - Filesystem tests use `tempfile` (`domain` dev-dependency) and never touch
   user paths.
-- Current coverage is 39 tests: 17 in `domain` (workspace and buffer
-  behavior), 9 in `tui` (command-line state and palette rendering), 7 in
-  `editor` (ex-command parsing and quit behavior), and 6 in `editor-core`
+- Current coverage is 68 tests: 17 in `domain` (workspace and buffer
+  behavior), 33 in `tui` (command-line state plus palette, notification, toast,
+  and text-wrapping rendering), 12 in `editor` (ex-command parsing, quit
+  behavior, and notification/toast bookkeeping), and 6 in `editor-core`
   (keymap and mode display).
 - There are no integration or TUI snapshot tests yet.
 
