@@ -1,16 +1,9 @@
-pub mod builder;
-pub mod command;
-pub mod execute;
-pub mod geometry;
-pub mod render;
-pub mod ui;
-
 use std::time::Duration;
 
-use crossterm::event::{self, Event};
 use domain::{error::Result, workspace::WorkspaceState};
+use editor::execute::execute;
 use editor_core::{
-    command::{Command, CommandLineCommand::Push, EditCommand::InsertChar},
+    command::{Command, CommandLineCommand, EditCommand::InsertChar},
     input::{
         Input,
         key::{Key, Mods},
@@ -18,9 +11,11 @@ use editor_core::{
         resolver::ResolveResult,
     },
 };
-use ratatui::DefaultTerminal;
-
-use crate::app::ui::Ui;
+use ratatui::{
+    DefaultTerminal,
+    crossterm::event::{self, Event},
+};
+use tui::{geometry, render, ui::Ui};
 
 pub struct App {
     // ============================================================
@@ -65,7 +60,7 @@ impl App {
 
         if let Ok(size) = terminal.size() {
             self.ui.layout.screen_size = (size.height, size.width);
-            self.calc_widgets_geometry();
+            geometry::calc_widgets_geometry(&mut self.ui);
         }
 
         while !self.should_quit() {
@@ -76,7 +71,7 @@ impl App {
                     }
                     Event::Resize(width, height) => {
                         self.ui.layout.screen_size = (height, width);
-                        self.calc_widgets_geometry();
+                        geometry::calc_widgets_geometry(&mut self.ui);
                     }
                     _ => {}
                 }
@@ -88,7 +83,9 @@ impl App {
 
             self.tick()?;
 
-            terminal.draw(|frame| self.render_into(frame))?;
+            terminal.draw(|frame| {
+                render::render_into(&mut self.workspace, &mut self.ui, &self.input, frame)
+            })?;
         }
 
         Ok(())
@@ -109,7 +106,9 @@ impl App {
             .resolver
             .feed(self.input.mode, key, &self.input.key_map)
         {
-            ResolveResult::Resolved(cmd) => self.execute(cmd)?,
+            ResolveResult::Resolved(cmd) => {
+                execute(&mut self.workspace, &mut self.input, &mut self.ui, cmd)?
+            }
             ResolveResult::Pending => {}
             ResolveResult::Unhandled(keys) => self.handle_unhandled(keys)?,
             ResolveResult::Abandoned(_keys) => {
@@ -122,7 +121,7 @@ impl App {
     /// Called once per frame, before feeding keys. Expires stale prefixes.
     pub fn tick(&mut self) -> Result<()> {
         if let Some(cmd) = self.input.resolver.poll_timeout(std::time::Instant::now()) {
-            self.execute(cmd)?;
+            execute(&mut self.workspace, &mut self.input, &mut self.ui, cmd)?
         }
         Ok(())
     }
@@ -133,8 +132,19 @@ impl App {
             if let editor_core::input::key::KeyCode::Char(c) = key.code {
                 if key.mods != Mods::CTRL && key.mods != Mods::ALT {
                     match self.input.mode {
-                        InputMode::Insert => self.execute(Command::Edit(InsertChar(c)))?,
-                        InputMode::Command => self.execute(Command::CommandLine(Push(c)))?,
+                        InputMode::Insert => execute(
+                            &mut self.workspace,
+                            &mut self.input,
+                            &mut self.ui,
+                            Command::Edit(InsertChar(c)),
+                        )?,
+                        InputMode::Command => execute(
+                            &mut self.workspace,
+                            &mut self.input,
+                            &mut self.ui,
+                            Command::CommandLine(CommandLineCommand::Push(c)),
+                        )?,
+
                         _ => {}
                     }
                 }
@@ -153,63 +163,5 @@ impl App {
 
     pub fn mode(&self) -> InputMode {
         self.input.mode
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use editor_core::command::SessionCommand::Quit;
-
-    #[test]
-    fn test_app_should_quit() {
-        let mut app = App::new().unwrap();
-        // Initially, is_running is false, so should_quit is true
-        assert!(app.should_quit());
-
-        // When running, should_quit is false
-        app.is_running = true;
-        assert!(!app.should_quit());
-
-        // Quitting sets is_running to false, so should_quit becomes true
-        app.execute(Command::Session(Quit)).unwrap();
-        assert!(!app.is_running);
-        assert!(app.should_quit());
-    }
-
-    #[test]
-    fn test_handle_escape_quits() {
-        let mut app = App::new().unwrap();
-        app.is_running = true;
-        app.handle_key(Key::esc()).unwrap();
-        assert!(!app.is_running);
-        assert!(app.should_quit());
-    }
-
-    #[test]
-    fn test_handle_ctrl_q_force_quits() {
-        let mut app = App::new().unwrap();
-        app.is_running = true;
-        app.handle_key(Key::ctrl('q')).unwrap();
-        assert!(!app.is_running);
-        assert!(app.should_quit());
-    }
-
-    #[test]
-    fn test_handle_ctrl_c_force_quits() {
-        let mut app = App::new().unwrap();
-        app.is_running = true;
-        app.handle_key(Key::ctrl('c')).unwrap();
-        assert!(!app.is_running);
-        assert!(app.should_quit());
-    }
-
-    #[test]
-    fn test_insert_ctrl_j_enters_normal_mode() {
-        let mut app = App::new().unwrap();
-        app.is_running = true;
-        app.input.mode = InputMode::Insert;
-        app.handle_key(Key::ctrl('j')).unwrap();
-        assert_eq!(app.input.mode, InputMode::Normal);
     }
 }

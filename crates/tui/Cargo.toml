@@ -8,6 +8,8 @@ rust-version.workspace = true
 
 [dependencies]
 # Internal Crates
+domain.workspace = true
+editor-core.workspace = true
 
 thiserror.workspace = true
 

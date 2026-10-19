@@ -1,4 +1,4 @@
-use tui::{layout::Layout, widgets::Widgets};
+use crate::{layout::Layout, widgets::Widgets};
 
 #[derive(Debug, Default)]
 pub struct Ui {

@@ -1,5 +1,5 @@
 use domain::error::{IdeError, Result};
-use editor::app::App;
+use rde_ide::app::App;
 
 fn main() -> Result<()> {
     // Initialize Ratatui terminal abstraction
@@ -23,4 +23,3 @@ fn main() -> Result<()> {
     result?;
     Ok(())
 }
-

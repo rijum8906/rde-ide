@@ -1228,6 +1228,7 @@ version = "0.1.0"
 dependencies = [
  "domain",
  "editor",
+ "editor-core",
  "ratatui",
  "tokio",
  "tui",
@@ -1738,6 +1739,8 @@ version = "0.1.0"
 dependencies = [
  "color-eyre",
  "crossterm",
+ "domain",
+ "editor-core",
  "ratatui",
  "thiserror 2.0.21",
 ]

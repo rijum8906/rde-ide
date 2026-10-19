@@ -90,6 +90,17 @@ impl PieceTable {
         self.total_len == 0
     }
 
+    // ---------- CHARS ----------
+
+    /// Returns
+    pub fn chars(&self) -> impl Iterator<Item = char> + '_ {
+        self.pieces.iter().flat_map(|p| self.piece_str(p).chars())
+    }
+
+    pub fn char_at(&self, char_offset: usize) -> Option<char> {
+        self.chars().nth(char_offset)
+    }
+
     pub fn char_count(&self) -> usize {
         self.chars().count()
     }
@@ -102,10 +113,16 @@ impl PieceTable {
         newlines + 1
     }
 
-    pub fn get_line_contents(&self, idx: usize) -> Option<String> {
+    // ---------- LINE ----------
+
+    /// Get the contents of a line in form of string
+    ///
+    /// Returns [`Option<String>`]
+    pub fn line(&self, idx: usize) -> Option<String> {
         self.line_range(idx).map(|range| self.slice_chars(range))
     }
 
+    /// Returns the start and end
     pub fn line_range(&self, idx: usize) -> Option<Range<usize>> {
         if self.total_len == 0 {
             return None;
@@ -278,14 +295,6 @@ impl PieceTable {
             out.push_str(self.piece_str(piece));
         }
         out
-    }
-
-    pub fn chars(&self) -> impl Iterator<Item = char> + '_ {
-        self.pieces.iter().flat_map(|p| self.piece_str(p).chars())
-    }
-
-    pub fn char_at(&self, char_offset: usize) -> Option<char> {
-        self.chars().nth(char_offset)
     }
 
     pub fn byte_at(&self, byte_offset: usize) -> Option<u8> {

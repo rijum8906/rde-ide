@@ -105,7 +105,7 @@ impl Buffer {
     }
 
     pub fn line(&self, idx: usize) -> Option<String> {
-        self.piece_table.get_line_contents(idx)
+        self.piece_table.line(idx)
     }
 
     pub fn line_range(&self, idx: usize) -> Option<Range<usize>> {
