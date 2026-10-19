@@ -67,6 +67,9 @@ filter output through `grep`/`head`, preserve the command's status
    and terminal management live in `apps/ide/src/app.rs`.
 7. **UI state lives in `tui`.** Put cursor/scroll state in `tui/src/state`,
    per-frame snapshots in `tui/src/viewmodel`, drawing in `tui/src/widgets`.
+8. **Lifecycle is reported, not performed.** `execute` returns an `Effect`
+   that the caller applies. Quit commands are intercepted by the dispatcher;
+   `App::dispatch` stops the event loop.
 
 ## Where does this code go?
 
@@ -75,6 +78,7 @@ filter output through `grep`/`head`, preserve the command's status
 | New key type or normalization rule | `editor-core/src/input/key.rs` |
 | New action | `editor-core/src/command/<category>.rs` |
 | Behavior for an action | `editor/src/execute/<category>.rs` |
+| New `:` ex command | `editor/src/execute/command_line.rs` |
 | Reusable buffer/cursor operation | `editor/src/mutation/` |
 | Document or workspace behavior | `domain/src/buffer/` or `domain/src/workspace/` |
 | Persistent UI state | `tui/src/state/` |
@@ -130,11 +134,12 @@ filter output through `grep`/`head`, preserve the command's status
 
 - `App::new` opens a hard-coded absolute path. There is no CLI argument
   parsing yet; don't rely on the path existing on another machine.
-- These commands panic today because their handlers are `todo!()`:
-  command-line editing (`:` mode typing), buffer switching/closing
-  (`Tab`, `Ctrl+W`, `b n`/`b p`/`b d`/`b D`), fullscreen (`Ctrl+F`), panel
-  focus, word/paragraph/page motions, yank/paste/undo/redo, save-as,
-  save-all, open-file, and new-scratch-buffer.
+- These commands panic today because their handlers are `todo!()`: buffer
+  switching/closing through key bindings (`Tab`, `Ctrl+W`,
+  `b n`/`b p`/`b d`/`b D`), fullscreen (`Ctrl+F`), panel focus,
+  word/paragraph/page motions, yank/paste/undo/redo, save-as, save-all,
+  open-file, and new-scratch-buffer. The command palette's `:bn`, `:bp`,
+  `:e`, and `:w <path>` cover some of these paths.
 - `Quit`/`ForceQuit` are intercepted in `App::handle_key`, not in
   `App::tick`.
 - Vertical scrolling is computed but not applied by the editor widget; the

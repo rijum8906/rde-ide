@@ -16,6 +16,8 @@ TUI only renders state.
   and a configurable prefix timeout, all driven by a keymap table.
 - **Layered design** — command definitions, execution, domain state, and
   rendering live in separate crates with a one-way dependency graph.
+- **Command palette** — press `:` for a centered, modal command editor with
+  caret movement, history, and `:w`/`:q`/`:wq`-style ex commands.
 - **Ratatui rendering** — tab bar, editor panel with gutter and cursor,
   file-tree side panel, and a status line.
 
@@ -81,6 +83,33 @@ Arrow keys also move the cursor in insert mode.
 | `Backspace` | Delete the character before the cursor (insert mode) |
 | `dd` | Delete the current line (normal mode) |
 
+### Command mode
+
+Press `:` in normal mode to open the command palette. It floats in the middle
+of the layout.
+
+| Key | Action |
+| --- | --- |
+| printable char | Insert into the command line |
+| `←` / `→` | Move the caret |
+| `Home` / `End` | Jump to the start / end of the line |
+| `↑` / `↓` | Browse command history |
+| `Backspace` | Delete before the caret |
+| `Ctrl+U` | Clear the line |
+| `Enter` | Run the command |
+| `Esc` | Cancel |
+
+Supported ex commands:
+
+| Command | Action |
+| --- | --- |
+| `:w [path]` | Write the active buffer, optionally to a new path |
+| `:q` | Quit when nothing is unsaved |
+| `:q!` | Quit regardless of unsaved changes |
+| `:wq`, `:x`, `:exit` | Write, then quit |
+| `:e <path>` | Open a file relative to the workspace root |
+| `:bn`, `:bp` | Switch to the next / previous buffer |
+
 ### Layout and session
 
 | Key | Action |
@@ -105,13 +134,14 @@ Implemented end to end:
 - Single-step, line, and file motions.
 - Normal/insert/visual/command mode transitions, including the edits implied
   by `a`, `A`, `I`, `o`, and `O`.
+- A floating command palette with caret editing, history browsing, and the
+  `:w`, `:q`, `:q!`, `:wq`, `:e`, `:bn`, and `:bp` ex commands.
 - Left panel toggle, saving a buffer, and quitting.
 - Multi-key chord resolution with a 500 ms timeout and prefix abandonment.
 
 Scaffolded but not implemented — invoking these currently panics with
 `todo!()`:
 
-- Command-line editing (`:` mode: typing, submit, cancel, history).
 - Buffer switching and closing (`Tab`, `Ctrl+W`, `b n`/`b p`/`b d`/`b D`).
 - Fullscreen mode, the right panel, and panel focus.
 - Word, paragraph, page, and bracket motions.

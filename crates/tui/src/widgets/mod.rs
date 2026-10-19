@@ -5,6 +5,7 @@
 //! also holds the [`Widgets`] aggregate and the helpers used to size panels.
 
 pub mod bottom_bar;
+pub mod command_palette;
 pub mod editor_panel;
 pub mod left_panel;
 pub mod screen_too_small;

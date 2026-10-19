@@ -6,15 +6,16 @@
 //! - the input policy ([`Input`]) turning keys into commands,
 //! - the UI state ([`Ui`]) holding layout and widget state.
 //!
-//! Each frame it polls terminal events, resolves keys into [`Command`]s, and
-//! dispatches them through [`editor::execute::execute`].
+//! Each frame it polls terminal events, resolves keys into [`Command`]s,
+//! dispatches them through [`editor::execute::execute`], and applies the
+//! resulting [`Effect`].
 
 use std::time::Duration;
 
 use domain::{error::Result, workspace::WorkspaceState};
-use editor::execute::execute;
+use editor::execute::{Effect, execute};
 use editor_core::{
-    command::{Command, CommandLineCommand, EditCommand::InsertChar, SessionCommand},
+    command::{Command, CommandLineCommand, EditCommand::InsertChar},
     input::{
         Input,
         key::{Key, Mods},
@@ -117,15 +118,7 @@ impl App {
             .resolver
             .feed(self.input.mode, key, &self.input.key_map)
         {
-            ResolveResult::Resolved(cmd) => {
-                // NOTE: this quit command is being handled here so no need to check further
-                if cmd == Command::Session(SessionCommand::Quit)
-                    || cmd == Command::Session(SessionCommand::ForceQuit)
-                {
-                    self.is_running = false;
-                }
-                execute(&mut self.workspace, &mut self.input, &mut self.ui, cmd)?
-            }
+            ResolveResult::Resolved(cmd) => self.dispatch(cmd)?,
             ResolveResult::Pending => {}
             ResolveResult::Unhandled(keys) => self.handle_unhandled(keys)?,
             ResolveResult::Abandoned(_keys) => {
@@ -138,7 +131,7 @@ impl App {
     /// Called once per frame, before feeding keys. Expires stale prefixes.
     pub fn tick(&mut self) -> Result<()> {
         if let Some(cmd) = self.input.resolver.poll_timeout(std::time::Instant::now()) {
-            execute(&mut self.workspace, &mut self.input, &mut self.ui, cmd)?
+            self.dispatch(cmd)?;
         }
         Ok(())
     }
@@ -149,23 +142,26 @@ impl App {
             if let editor_core::input::key::KeyCode::Char(c) = key.code {
                 if key.mods != Mods::CTRL && key.mods != Mods::ALT {
                     match self.input.mode {
-                        InputMode::Insert => execute(
-                            &mut self.workspace,
-                            &mut self.input,
-                            &mut self.ui,
-                            Command::Edit(InsertChar(c)),
-                        )?,
-                        InputMode::Command => execute(
-                            &mut self.workspace,
-                            &mut self.input,
-                            &mut self.ui,
-                            Command::CommandLine(CommandLineCommand::Push(c)),
-                        )?,
+                        InputMode::Insert => self.dispatch(Command::Edit(InsertChar(c)))?,
+                        InputMode::Command => {
+                            self.dispatch(Command::CommandLine(CommandLineCommand::Push(c)))?
+                        }
 
                         _ => {}
                     }
                 }
             }
+        }
+        Ok(())
+    }
+
+    /// Dispatch a command and apply the side effect it reports.
+    ///
+    /// Lifecycle is owned here rather than in the editor crate, so quit
+    /// commands come back as [`Effect::Quit`].
+    fn dispatch(&mut self, cmd: Command) -> Result<()> {
+        if execute(&mut self.workspace, &mut self.input, &mut self.ui, cmd)? == Effect::Quit {
+            self.is_running = false;
         }
         Ok(())
     }

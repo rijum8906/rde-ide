@@ -23,6 +23,12 @@ pub fn handle_mode_command(
     cmd: ModeCommand,
 ) -> DomainResult<()> {
     match cmd {
+        ModeCommand::Enter(InputMode::Command) => {
+            // Every `:` starts a fresh command line, even if a draft from an
+            // earlier prompt is still in the widget state.
+            ui.widgets.bottom_bar.state.clear_command_line();
+            input.mode = InputMode::Command;
+        }
         ModeCommand::Enter(mode) => input.mode = mode,
         ModeCommand::ExitToNormal => input.mode = InputMode::Normal,
         ModeCommand::InsertBefore => todo!(),

@@ -15,7 +15,8 @@ pub fn handle_session_command(ws: &mut WorkspaceState, cmd: SessionCommand) {
         SessionCommand::OpenFile(_) => todo!(),
         SessionCommand::OpenFileTree => todo!(),
         SessionCommand::NewScratchBuffer => todo!(),
-        // NOTE: only Quit and ForceQuit is being ignored because it will be handled in the app level
+        // Quit commands never reach this handler: the dispatcher converts them
+        // into `Effect::Quit`, which the app applies to its event loop.
         _ => {}
     }
 }

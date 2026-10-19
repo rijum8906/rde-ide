@@ -112,10 +112,12 @@ mod tests {
     use super::*;
     use crate::command::{
         Command,
+        CommandLineCommand::{Clear, CursorLeft, HistoryPrev, Submit},
         LayoutCommand::ToggleLeftPanel,
         ModeCommand::{ExitToNormal, InsertAtLineEnd, InsertAtLineStart},
         SessionCommand::{ForceQuit, Quit},
     };
+    use crate::input::key::KeyCode;
 
     #[test]
     fn default_keymap_contains_session_bindings() {
@@ -162,6 +164,28 @@ mod tests {
         assert_eq!(
             keymap.lookup(InputMode::Normal, &[Key::char('I')]),
             Some(&Command::Mode(InsertAtLineStart))
+        );
+    }
+
+    #[test]
+    fn command_mode_binds_editing_and_history_keys() {
+        let keymap = Keymap::default();
+
+        assert_eq!(
+            keymap.lookup(InputMode::Command, &[Key::plain(KeyCode::Enter)]),
+            Some(&Command::CommandLine(Submit))
+        );
+        assert_eq!(
+            keymap.lookup(InputMode::Command, &[Key::plain(KeyCode::Left)]),
+            Some(&Command::CommandLine(CursorLeft))
+        );
+        assert_eq!(
+            keymap.lookup(InputMode::Command, &[Key::plain(KeyCode::Up)]),
+            Some(&Command::CommandLine(HistoryPrev))
+        );
+        assert_eq!(
+            keymap.lookup(InputMode::Command, &[Key::ctrl('u')]),
+            Some(&Command::CommandLine(Clear))
         );
     }
 }

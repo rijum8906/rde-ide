@@ -5,6 +5,7 @@
 //! they never reach into the workspace directly.
 
 pub mod bottom_bar;
+pub mod command_palette;
 pub mod editor_panel;
 pub mod left_panel;
 pub mod top_bar;

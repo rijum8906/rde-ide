@@ -151,16 +151,18 @@ Dispatch lives in `crates/editor/src/execute/mod.rs`:
 | `Mode` | `handle_mode_command` | workspace, input, UI |
 | `Layout` | `handle_layout_command` | workspace, UI |
 | `Edit` | `handle_edit_command` | workspace, UI |
-| `CommandLine` | `handle_command_line_command` | command only |
+| `CommandLine` | `handle_command_line_command` | workspace, input, UI |
 
 Handlers are free functions, not methods on the app. The app shell owns the
 lifecycle and passes in the state a handler is allowed to touch. Handlers
 return `DomainResult<()>` where they can fail; the dispatcher converts to
 `IdeError` with `?`.
 
-**Lifecycle exception:** `Quit` and `ForceQuit` are ignored by
-`handle_session_command`. `App::handle_key` sets `is_running = false` before
-dispatching, because the editor crate does not own the app's lifecycle.
+**Effects:** `execute` returns an `Effect` (`None` or `Quit`) that the caller
+must apply. Quit commands are recognised by the dispatcher itself and never
+reach `handle_session_command`; `App::dispatch` turns `Effect::Quit` into
+`is_running = false`. This keeps lifecycle in the binary crate while still
+letting `:q`/`:wq` from the command palette stop the application.
 
 ## Domain model
 
@@ -239,7 +241,17 @@ pub struct Ui {
    - `render_top_bar` — tabs with active/dirty markers;
    - `render_bottom_bar` — mode badge, filename, cursor position, line count;
    - `render_left_panel` — flattened file-tree rows (top level only);
-   - `render_editor_panel` — gutter, lines, current-line highlight, cursor.
+   - `render_editor_panel` — gutter, lines, current-line highlight, cursor;
+   - `render_command_palette` — modal command editor, only in command mode.
+
+### Command palette
+
+In command mode `render/command_palette.rs` centers a 72-column card in the
+middle of the screen; `widgets/command_palette.rs` draws it over the layout
+with a rounded border, title, drop shadow, and key-hint footer. The widget borrows
+the command text and caret from `BottomBarState` (both measured in
+characters), scrolls the input horizontally so the caret stays visible, and
+draws the caret as an inverted cell.
 
 ### State vs. view model
 
@@ -258,6 +270,18 @@ poll(16ms) ──> read event ──> handle_key ──> resolver ──> execut
    │
    └──> draw: render_into ──> validate size ──> geometry ──> view models ──> widgets
 ```
+
+## Worked example: `:wq`
+
+1. `:` in normal mode resolves to `ModeCommand::Enter(Command)`, which clears
+   the command line and switches `input.mode`.
+2. Printable keys are unbound in command mode, so the app's fall-through emits
+   `CommandLine::Push(c)`. The palette redraws each frame from
+   `BottomBarState`.
+3. `Enter` resolves to `Submit`: the line is recorded in history, the mode
+   returns to normal, and `run_ex` parses `wq`.
+4. `wq` saves the buffer and returns `Effect::Quit`; `App::dispatch` sets
+   `is_running = false` and the loop ends.
 
 ## Worked example: `dd`
 
@@ -325,8 +349,10 @@ line is planned.
   module they exercise.
 - Filesystem tests use `tempfile` (`domain` dev-dependency) and never touch
   user paths.
-- Current coverage is 22 tests: 17 in `domain` (workspace behavior, buffer
-  editing) and 5 in `editor-core` (keymap and mode display).
+- Current coverage is 39 tests: 17 in `domain` (workspace and buffer
+  behavior), 9 in `tui` (command-line state and palette rendering), 7 in
+  `editor` (ex-command parsing and quit behavior), and 6 in `editor-core`
+  (keymap and mode display).
 - There are no integration or TUI snapshot tests yet.
 
 ## Performance notes
@@ -346,17 +372,14 @@ line is planned.
 ## Known gaps
 
 - The startup path is hard-coded in `App::new`.
-- Command-line editing, buffer switching/closing, fullscreen, the right panel,
+- Buffer switching/closing through key bindings, fullscreen, the right panel,
   word/page motions, and yank/paste/undo are `todo!()`; invoking them panics.
+  (`:bn`/`:bp` work through the command palette.)
 - Vertical scrolling is computed in `EditorPanelState` but not applied by the
   editor widget: lines are always drawn from line 0 and the cursor is placed
   by absolute line index, so the cursor disappears once it moves below the
   viewport.
-- The bottom bar's cursor field is documented as 1-indexed `(line, col)` but is
-  filled with 0-indexed `(col, line)`.
 - The bottom bar always renders in status mode; `BottomBarMode::Command` is
-  never selected.
-- `Quit`/`ForceQuit` are only intercepted for key-resolved commands
-  (`App::handle_key`), not for commands produced by `App::tick`.
+  never selected because the command palette now owns command-line display.
 - `crates/config` is an empty placeholder, and several crates declare unused
   dependencies.

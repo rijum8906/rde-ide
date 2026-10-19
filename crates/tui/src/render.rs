@@ -8,6 +8,7 @@
 //! state, and input state.
 
 pub(super) mod bottom_bar;
+pub(super) mod command_palette;
 pub(super) mod editor_panel;
 pub(super) mod left_panel;
 pub(super) mod top_bar;
@@ -23,8 +24,8 @@ use crate::{
     constant::{MIN_SCREEN_HEIGHT, MIN_SCREEN_WIDTH},
     geometry::calc_widgets_geometry,
     render::{
-        bottom_bar::render_bottom_bar, editor_panel::render_editor_panel,
-        left_panel::render_left_panel, top_bar::render_top_bar,
+        bottom_bar::render_bottom_bar, command_palette::render_command_palette,
+        editor_panel::render_editor_panel, left_panel::render_left_panel, top_bar::render_top_bar,
     },
     ui::Ui,
     widgets::screen_too_small::ScreenTooSmall,
@@ -63,6 +64,9 @@ fn render_ui(ws: &mut WorkspaceState, ui: &mut Ui, input: &Input, frame: &mut Fr
     // TODO: create the right panel and implement here
 
     render_editor_panel(ws, ui, frame);
+
+    // Command mode opens a modal editor over the layout, so it is drawn last.
+    render_command_palette(ui, frame, input.mode);
 }
 
 /// Validates that the terminal meets minimum size requirements.

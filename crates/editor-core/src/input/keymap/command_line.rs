@@ -26,6 +26,41 @@ pub(super) fn default_command_line_keymap(keymap: &mut Keymap) -> &mut Keymap {
         vec![Key::plain(KeyCode::Backspace)],
         Command::CommandLine(CommandLineCommand::Pop),
     );
+    keymap.bind(
+        command,
+        vec![Key::plain(KeyCode::Left)],
+        Command::CommandLine(CommandLineCommand::CursorLeft),
+    );
+    keymap.bind(
+        command,
+        vec![Key::plain(KeyCode::Right)],
+        Command::CommandLine(CommandLineCommand::CursorRight),
+    );
+    keymap.bind(
+        command,
+        vec![Key::plain(KeyCode::Home)],
+        Command::CommandLine(CommandLineCommand::CursorHome),
+    );
+    keymap.bind(
+        command,
+        vec![Key::plain(KeyCode::End)],
+        Command::CommandLine(CommandLineCommand::CursorEnd),
+    );
+    keymap.bind(
+        command,
+        vec![Key::plain(KeyCode::Up)],
+        Command::CommandLine(CommandLineCommand::HistoryPrev),
+    );
+    keymap.bind(
+        command,
+        vec![Key::plain(KeyCode::Down)],
+        Command::CommandLine(CommandLineCommand::HistoryNext),
+    );
+    keymap.bind(
+        command,
+        vec![Key::ctrl('u')],
+        Command::CommandLine(CommandLineCommand::Clear),
+    );
 
     keymap
 }
