@@ -155,17 +155,13 @@ mod tests {
     fn uppercase_insert_commands_accept_terminal_key_encodings() {
         let keymap = Keymap::default();
 
-        for key in [Key::char('A')] {
-            assert_eq!(
-                keymap.lookup(InputMode::Normal, &[key]),
-                Some(&Command::Mode(InsertAtLineEnd))
-            );
-        }
-        for key in [Key::char('I')] {
-            assert_eq!(
-                keymap.lookup(InputMode::Normal, &[key]),
-                Some(&Command::Mode(InsertAtLineStart))
-            );
-        }
+        assert_eq!(
+            keymap.lookup(InputMode::Normal, &[Key::char('A')]),
+            Some(&Command::Mode(InsertAtLineEnd))
+        );
+        assert_eq!(
+            keymap.lookup(InputMode::Normal, &[Key::char('I')]),
+            Some(&Command::Mode(InsertAtLineStart))
+        );
     }
 }
