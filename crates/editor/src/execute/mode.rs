@@ -1,3 +1,9 @@
+//! Mode transitions.
+//!
+//! Besides switching `Input::mode`, this handles transitions that imply an
+//! edit (`a`, `A`, `I`, `o`, `O`): the cursor is moved and the newline is
+//! inserted before insert mode becomes active.
+
 use domain::{error::DomainResult, workspace::WorkspaceState};
 use editor_core::{
     command::ModeCommand::{self},

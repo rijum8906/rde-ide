@@ -1,4 +1,6 @@
-use crate::command::command::MotionCommand;
+//! Buffer editing: insertion, deletion, yank/paste, and undo history.
+
+use crate::command::MotionCommand;
 
 /// Editing the buffer contents.
 #[derive(Debug, Clone, PartialEq, Eq)]

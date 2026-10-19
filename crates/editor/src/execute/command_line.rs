@@ -1,3 +1,5 @@
+//! Command-line (`:`) editing commands.
+
 use editor_core::command::CommandLineCommand;
 
 pub fn handle_command_line_command(cmd: CommandLineCommand) {

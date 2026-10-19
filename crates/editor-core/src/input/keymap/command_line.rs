@@ -1,3 +1,5 @@
+//! Default keybindings for `:` command-line mode.
+
 use crate::{
     command::{Command, CommandLineCommand},
     input::{

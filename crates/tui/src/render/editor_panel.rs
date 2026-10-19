@@ -1,3 +1,6 @@
+//! Editor panel rendering: builds line views from the active buffer and
+//! draws them.
+
 use domain::workspace::WorkspaceState;
 use ratatui::Frame;
 
@@ -22,7 +25,8 @@ fn build_editor_panel_view(ws: &mut WorkspaceState, ui: &mut Ui) -> EditorPanelV
         return EditorPanelView::empty();
     };
 
-    // NOTE: at each frame the we need to update the line count
+    // Refresh the cached line count before building the line views; cursor
+    // clamping and scroll correction depend on it.
 
     ui.widgets.editor_panel.state.line_count = buffer.line_count();
 

@@ -1,3 +1,5 @@
+//! Layout changes: panel visibility and fullscreen.
+
 /// Layout changes.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LayoutCommand {

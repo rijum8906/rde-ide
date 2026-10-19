@@ -73,6 +73,7 @@ impl FromStr for PieceTable {
 }
 
 impl PieceTable {
+    /// Create an empty document.
     pub fn new() -> Self {
         Self {
             original: String::new(),
@@ -82,29 +83,35 @@ impl PieceTable {
         }
     }
 
+    /// Total length of the document in **bytes**.
     pub fn len(&self) -> usize {
         self.total_len
     }
 
+    /// True if the document contains no text.
     pub fn is_empty(&self) -> bool {
         self.total_len == 0
     }
 
     // ---------- CHARS ----------
 
-    /// Returns
+    /// Iterate over the document as a stream of `char`s, in document order.
     pub fn chars(&self) -> impl Iterator<Item = char> + '_ {
         self.pieces.iter().flat_map(|p| self.piece_str(p).chars())
     }
 
+    /// Return the `char` at `char_offset`, or `None` past the end.
     pub fn char_at(&self, char_offset: usize) -> Option<char> {
         self.chars().nth(char_offset)
     }
 
+    /// Number of characters (not bytes) in the document.
     pub fn char_count(&self) -> usize {
         self.chars().count()
     }
 
+    /// Number of lines. A non-empty document with no newline counts as one
+    /// line; an empty document counts as zero.
     pub fn line_count(&self) -> usize {
         if self.total_len == 0 {
             return 0;
@@ -115,14 +122,14 @@ impl PieceTable {
 
     // ---------- LINE ----------
 
-    /// Get the contents of a line in form of string
-    ///
-    /// Returns [`Option<String>`]
+    /// Return the text of line `idx` without its trailing newline, or `None`
+    /// if the line does not exist.
     pub fn line(&self, idx: usize) -> Option<String> {
         self.line_range(idx).map(|range| self.slice_chars(range))
     }
 
-    /// Returns the start and end
+    /// Character range `start..end` covered by line `idx`, excluding the
+    /// trailing newline. `None` if the line does not exist.
     pub fn line_range(&self, idx: usize) -> Option<Range<usize>> {
         if self.total_len == 0 {
             return None;
@@ -169,6 +176,11 @@ impl PieceTable {
         self.chars().take(char_offset).map(|c| c.len_utf8()).sum()
     }
 
+    /// Insert `text` at byte `offset`.
+    ///
+    /// `offset` must be on a UTF-8 character boundary. The text is appended to
+    /// the add buffer and spliced into the piece list, splitting the piece at
+    /// the insertion point if necessary.
     pub fn insert(&mut self, offset: usize, text: &str) -> DomainResult<()> {
         if text.is_empty() {
             return Ok(());
@@ -222,6 +234,10 @@ impl PieceTable {
         Ok(())
     }
 
+    /// Delete the half-open byte range `range`.
+    ///
+    /// Both ends must be on UTF-8 character boundaries. Pieces fully inside
+    /// the range are dropped; pieces straddling an end are trimmed.
     pub fn delete(&mut self, range: Range<usize>) -> DomainResult<()> {
         let start = range.start;
         let end = range.end;
@@ -285,10 +301,12 @@ impl PieceTable {
         Ok(())
     }
 
+    /// Replace the whole document with `text`.
     pub fn replace_all(&mut self, text: &str) {
         *self = Self::from_str(text).unwrap();
     }
 
+    /// Materialize the document into a single `String`.
     pub fn string(&self) -> String {
         let mut out = String::with_capacity(self.total_len);
         for piece in &self.pieces {
@@ -297,6 +315,7 @@ impl PieceTable {
         out
     }
 
+    /// Return the byte at `byte_offset`, or `None` past the end.
     pub fn byte_at(&self, byte_offset: usize) -> Option<u8> {
         if byte_offset >= self.total_len {
             return None;
@@ -312,6 +331,8 @@ impl PieceTable {
         None
     }
 
+    /// True if `byte_offset` is a valid boundary between UTF-8 characters
+    /// (and within the document).
     pub fn is_char_boundary(&self, byte_offset: usize) -> bool {
         if byte_offset == 0 || byte_offset == self.total_len {
             return true;

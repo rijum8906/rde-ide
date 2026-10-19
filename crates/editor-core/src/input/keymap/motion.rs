@@ -1,3 +1,5 @@
+//! Default keybindings for cursor motion.
+
 use crate::{
     command::{
         Command,

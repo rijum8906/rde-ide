@@ -1,3 +1,10 @@
+//! Command execution.
+//!
+//! [`execute`] is the single entry point: it routes each [`Command`] category
+//! to its handler and hands over only the state that category is allowed to
+//! touch. Handlers are free functions rather than methods so the app shell can
+//! own the lifecycle without the editor crate owning the app.
+
 use domain::{error::Result, workspace::WorkspaceState};
 use editor_core::{command::Command, input::Input};
 use tui::ui::Ui;

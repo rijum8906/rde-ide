@@ -1,3 +1,5 @@
+//! Default keybindings for mode transitions.
+
 use crate::{
     command::{Command, ModeCommand},
     input::{

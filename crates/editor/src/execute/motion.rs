@@ -1,3 +1,8 @@
+//! Cursor motion commands.
+//!
+//! Every motion updates only [`EditorPanelState`](tui::state::editor_panel::EditorPanelState);
+//! the buffer is read for line lengths but never modified.
+
 use domain::workspace::WorkspaceState;
 use editor_core::command::MotionCommand;
 use tui::ui::Ui;

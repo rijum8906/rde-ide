@@ -1,3 +1,5 @@
+//! Default keybindings for session lifecycle actions.
+
 use crate::{
     command::{Command, SessionCommand},
     input::{

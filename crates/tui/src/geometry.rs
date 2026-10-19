@@ -1,3 +1,9 @@
+//! Widget geometry calculation.
+//!
+//! Given the terminal size and the current [`Layout`](crate::layout::Layout)
+//! policy, computes a [`Rect`] for every widget. Widgets never size
+//! themselves; they draw into the rect assigned here.
+
 use ratatui::layout::Rect;
 
 use crate::{

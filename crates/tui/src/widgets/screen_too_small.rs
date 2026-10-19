@@ -1,3 +1,9 @@
+//! Fallback shown when the terminal is smaller than the supported minimum.
+//!
+//! Instead of drawing a broken layout, the whole frame is replaced by this
+//! widget, which reports the minimum and current dimensions. Very small
+//! viewports get a compact, borderless variant.
+
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},

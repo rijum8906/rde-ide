@@ -1,9 +1,12 @@
-//! Editor Input Handler
+//! Text insertion and deletion.
 //!
-//! Manages text insertions (`insert_char`, `insert_new_line`) and deletions (`delete`)
-//! for the text editor panel. It translates 2D UI cursor positions (`cursor_line` and
-//! `cursor_col`) into 1D character offsets, converts them to UTF-8 byte offsets,
-//! and safely updates both the underlying buffer and the cursor state.
+//! Implements `insert_char`, `insert_new_line`, and `delete` for the editor
+//! panel. Cursor positions are 2D and character-based, while the piece table
+//! works in UTF-8 byte offsets, so every edit goes through the same
+//! translation: `(cursor_line, cursor_col) -> char offset -> byte offset`.
+//!
+//! The buffer and the cursor state are always updated together, so they cannot
+//! drift apart after an edit.
 
 use std::ops::Range;
 

@@ -1,3 +1,5 @@
+//! Default keybindings for buffer editing.
+
 use crate::{
     command::{Command, EditCommand},
     input::{

@@ -1,3 +1,5 @@
+//! Default keybindings for buffer and panel navigation.
+
 use crate::{
     command::{Command, WorkspaceCommand},
     input::{

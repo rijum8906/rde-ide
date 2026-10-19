@@ -1,9 +1,20 @@
+//! Application shell: owns runtime state and drives the event loop.
+//!
+//! [`App`] ties the three layers together:
+//!
+//! - the domain ([`WorkspaceState`]) holding the open buffers,
+//! - the input policy ([`Input`]) turning keys into commands,
+//! - the UI state ([`Ui`]) holding layout and widget state.
+//!
+//! Each frame it polls terminal events, resolves keys into [`Command`]s, and
+//! dispatches them through [`editor::execute::execute`].
+
 use std::time::Duration;
 
 use domain::{error::Result, workspace::WorkspaceState};
 use editor::execute::execute;
 use editor_core::{
-    command::{Command, CommandLineCommand, EditCommand::InsertChar},
+    command::{Command, CommandLineCommand, EditCommand::InsertChar, SessionCommand},
     input::{
         Input,
         key::{Key, Mods},
@@ -107,6 +118,12 @@ impl App {
             .feed(self.input.mode, key, &self.input.key_map)
         {
             ResolveResult::Resolved(cmd) => {
+                // NOTE: this quit command is being handled here so no need to check further
+                if cmd == Command::Session(SessionCommand::Quit)
+                    || cmd == Command::Session(SessionCommand::ForceQuit)
+                {
+                    self.is_running = false;
+                }
                 execute(&mut self.workspace, &mut self.input, &mut self.ui, cmd)?
             }
             ResolveResult::Pending => {}

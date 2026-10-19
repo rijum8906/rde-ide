@@ -1,3 +1,5 @@
+//! Workspace commands: buffer switching, closing, and panel focus.
+
 use domain::workspace::WorkspaceState;
 use editor_core::command::WorkspaceCommand;
 use tui::ui::Ui;

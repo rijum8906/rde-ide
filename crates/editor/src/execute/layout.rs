@@ -1,3 +1,5 @@
+//! Layout commands: panel visibility and fullscreen.
+
 use domain::workspace::WorkspaceState;
 use editor_core::command::LayoutCommand;
 use tui::ui::Ui;

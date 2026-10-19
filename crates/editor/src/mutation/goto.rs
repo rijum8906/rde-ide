@@ -1,3 +1,9 @@
+//! Cursor movement helpers that need buffer contents.
+//!
+//! Unlike the pure `EditorPanelState` movers, these functions read line
+//! lengths and the buffer bounds, so moving up/down can clamp the column and
+//! moving to the end of the file lands on the real last line.
+
 use domain::workspace::WorkspaceState;
 use tui::state::editor_panel::EditorPanelState;
 

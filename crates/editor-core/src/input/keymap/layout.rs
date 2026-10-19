@@ -1,3 +1,5 @@
+//! Default keybindings for layout changes.
+
 use crate::{
     command::{Command, LayoutCommand},
     input::{key::Key, keymap::Keymap, mode::InputMode},

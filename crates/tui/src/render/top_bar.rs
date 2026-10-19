@@ -1,3 +1,5 @@
+//! Top bar rendering: builds the tab strip view and draws it.
+
 use domain::workspace::WorkspaceState;
 use ratatui::Frame;
 

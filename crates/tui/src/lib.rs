@@ -1,6 +1,14 @@
-//! UI Module for IDE project.
+//! Terminal UI for the IDE.
 //!
-//! This module provides the user interface components and functionality for the IDE project.
+//! The crate renders domain state; it does not decide what that state is.
+//! Data flows in one direction each frame:
+//!
+//! 1. [`render`] builds a view model ([`viewmodel`]) from the workspace and
+//!    [`ui`] state.
+//! 2. A [`widgets`] implementation draws the view into a Ratatui buffer.
+//! 3. Persistent per-widget state ([`state`]) survives between frames, plus
+//!    [`layout`] and [`geometry`] for sizing and [`constant`] for shared
+//!    dimensions.
 
 pub mod constant;
 pub mod geometry;

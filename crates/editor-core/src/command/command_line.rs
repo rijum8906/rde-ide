@@ -1,3 +1,5 @@
+//! Command-line (`:`) mode actions.
+
 /// Editing the `:` command line.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CommandLineCommand {

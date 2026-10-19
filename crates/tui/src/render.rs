@@ -1,3 +1,12 @@
+//! Frame rendering entry point.
+//!
+//! Validates the terminal size, recalculates widget geometry, then draws each
+//! panel from the current domain and UI state. Widgets stay dumb: everything
+//! they need is assembled here and handed over as a view model.
+//!
+//! Call [`render_into`] once per frame with the frame's mutable workspace, UI
+//! state, and input state.
+
 pub(super) mod bottom_bar;
 pub(super) mod editor_panel;
 pub(super) mod left_panel;

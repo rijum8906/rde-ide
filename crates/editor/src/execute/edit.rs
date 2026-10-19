@@ -1,3 +1,6 @@
+//! Text editing commands: insertion, deletion, and the motion-prefixed
+//! variants (`d{motion}`, `c{motion}`, `y{motion}`).
+
 use domain::{error::DomainResult, workspace::WorkspaceState};
 use editor_core::command::EditCommand;
 use tui::ui::Ui;

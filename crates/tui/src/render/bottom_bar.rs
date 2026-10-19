@@ -1,3 +1,5 @@
+//! Bottom bar rendering: builds the status-line view and draws it.
+
 use domain::workspace::WorkspaceState;
 use editor_core::input::mode::InputMode;
 use ratatui::Frame;

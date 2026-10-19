@@ -1,13 +1,10 @@
+//! Session lifecycle commands: quit, save, and open files.
+
 use domain::workspace::WorkspaceState;
 use editor_core::command::SessionCommand;
 
 pub fn handle_session_command(ws: &mut WorkspaceState, cmd: SessionCommand) {
     match cmd {
-        SessionCommand::Quit => {
-            // TODO: look for dirty buffers and give option to save them
-            // and more
-        }
-        SessionCommand::ForceQuit => todo!(),
         SessionCommand::SaveBuffer => {
             if let Some(buffer) = ws.active_buffer_mut() {
                 let _ = buffer.save();
@@ -18,5 +15,7 @@ pub fn handle_session_command(ws: &mut WorkspaceState, cmd: SessionCommand) {
         SessionCommand::OpenFile(_) => todo!(),
         SessionCommand::OpenFileTree => todo!(),
         SessionCommand::NewScratchBuffer => todo!(),
+        // NOTE: only Quit and ForceQuit is being ignored because it will be handled in the app level
+        _ => {}
     }
 }

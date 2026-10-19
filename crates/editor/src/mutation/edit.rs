@@ -1,3 +1,5 @@
+//! Line-level edits that span newline boundaries.
+
 use domain::{
     error::{DomainError, DomainResult},
     workspace::WorkspaceState,

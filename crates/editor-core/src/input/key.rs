@@ -1,13 +1,23 @@
+//! Keyboard types.
+//!
+//! Defines the editor's own key vocabulary so the rest of the codebase never
+//! depends on crossterm. [`Key`] is `Copy`, `Eq`, and `Hash`, which lets a
+//! keymap use it directly as a lookup key.
+//!
+//! `From<CtKeyEvent>` is the single boundary where terminal events are
+//! normalized; SHIFT is folded into the character itself for `Char` keys
+//! (`Shift+w` arrives as `'W'`) and kept as a modifier for everything else.
+
 use crossterm::event::{KeyCode as CtKeyCode, KeyEvent as CtKeyEvent, KeyModifiers as CtMods};
 
-/// Your app's stable key type. `Copy`, `Eq`, `Hash` — usable as a trie key.
+/// The editor's normalized key type. `Copy`, `Eq`, `Hash` — usable as a trie key.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Key {
     pub code: KeyCode,
     pub mods: Mods,
 }
 
-/// Your keycode vocabulary (subset of crossterm, plus anything you add).
+/// The editor's key vocabulary (a subset of crossterm, plus anything we add).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum KeyCode {
     Char(char),
@@ -25,7 +35,7 @@ pub enum KeyCode {
     PageUp,
     PageDown,
     F(u8),
-    // … only what your keymap needs
+    // Add variants here as the keymap needs them.
 }
 
 /// Modifiers as a compact bitflag set.
@@ -45,7 +55,8 @@ impl Mods {
     pub const ALT: Mods = Mods(1 << 1);
     pub const SHIFT: Mods = Mods(1 << 2);
     pub const SUPER: Mods = Mods(1 << 3);
-    // bit ops via std::ops if you want |, &, contains
+    // Combine modifiers with `|`; add `contains` here if membership tests
+    // are needed.
 }
 
 impl Key {
@@ -80,7 +91,7 @@ impl Key {
     }
 }
 
-/// The ONLY place crossterm is touched for input. Normalizes at the boundary.
+/// The only place crossterm is touched for input. Normalizes at the boundary.
 impl From<CtKeyEvent> for Key {
     fn from(e: CtKeyEvent) -> Self {
         // Normalize modifiers: drop SHIFT for Char (Shift+w == 'W'), keep for non-char.

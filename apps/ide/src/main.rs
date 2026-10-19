@@ -1,3 +1,10 @@
+//! Binary entry point.
+//!
+//! Initializes the terminal through Ratatui, builds the [`App`], and runs its
+//! event loop. Terminal state is restored on every exit path, including when
+//! the app returns an error, so a failed startup never leaves the user with a
+//! broken terminal.
+
 use domain::error::{IdeError, Result};
 use rde_ide::app::App;
 

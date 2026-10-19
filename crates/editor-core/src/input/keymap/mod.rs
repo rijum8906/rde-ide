@@ -2,6 +2,10 @@
 //!
 //! Sequences are *chords*: one or more keys pressed in order. A single-key
 //! binding is just a sequence of length 1.
+//!
+//! Bindings are grouped by command category in the sibling modules and merged
+//! by [`default_keymap`], so adding a binding never means editing a giant
+//! match block.
 
 use std::collections::HashMap;
 

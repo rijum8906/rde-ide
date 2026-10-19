@@ -1,3 +1,5 @@
+//! Cursor motion commands.
+
 /// Cursor movement. Every variant is a pure `(line, col) -> new_pos`
 /// operation, applied within the current buffer.
 #[derive(Debug, Clone, PartialEq, Eq)]

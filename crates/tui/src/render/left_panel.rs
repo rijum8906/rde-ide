@@ -1,3 +1,6 @@
+//! Left panel rendering: builds a flat row list from the workspace root and
+//! draws it.
+
 use domain::workspace::{WorkspaceState, file_tree::scan_dir};
 use ratatui::Frame;
 

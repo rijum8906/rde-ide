@@ -1,6 +1,15 @@
-//! Input Module
+//! Input handling.
 //!
-//! This module helps in managing input methods and inputs
+//! Turns terminal key presses into [`Command`](crate::command::Command)s. The
+//! pieces are deliberately separate:
+//!
+//! - [`key`] normalizes terminal events into the editor's own key type,
+//! - [`keymap`] stores bindings per mode,
+//! - [`mode`] names the input modes those bindings are grouped by,
+//! - [`resolver`] matches key sequences and reports what to do next.
+//!
+//! [`Input`] bundles the persistent parts so a frontend can hold them as one
+//! value.
 
 use crate::input::{keymap::Keymap, mode::InputMode, resolver::Resolver};
 

@@ -1,3 +1,5 @@
+//! Buffer, tab, and panel-focus commands.
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum WorkspaceCommand {
     // --- Buffer Management (Document Level) ---

@@ -1,6 +1,8 @@
-//! This module contains all the Wigets needed to build the IDE
+//! Widgets and their persistent state.
 //!
-//! - wigets may also include states to manage them
+//! Each widget pairs a view model with a [`ratatui::widgets::StatefulWidget`]
+//! state struct that survives across frames (cursor, scroll, ...). This module
+//! also holds the [`Widgets`] aggregate and the helpers used to size panels.
 
 pub mod bottom_bar;
 pub mod editor_panel;
@@ -24,14 +26,14 @@ pub const LEFT_PANEL_WIDTH: u16 = 25;
 /// The width of the right panel
 pub const RIGHT_PANEL_WIDTH: u16 = 25;
 
-/// Returns the calcualted height of the panels
+/// Returns the calculated height of the panels
 /// e.g.(left_panel, right_panel, editor_panel)
 pub fn calc_panel_height(screen_height: u16) -> u16 {
     screen_height - TOP_BAR_HEIGHT - BOTTOM_BAR_HEIGHT
 }
 
-/// Returns the calcualted width of the editor_panel
-/// i.e. after openning or closing of the side panels
+/// Returns the calculated width of the editor_panel
+/// i.e. after opening or closing the side panels
 pub fn calc_editor_panel_width(screen_width: u16, layout_states: Layout) -> u16 {
     let mut res = screen_width;
 

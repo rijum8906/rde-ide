@@ -1,3 +1,8 @@
+//! Global UI constants.
+//!
+//! Minimum terminal size and the fixed heights/widths shared by the layout and
+//! geometry calculation.
+
 pub const MIN_SCREEN_WIDTH: u16 = 80;
 pub const MIN_SCREEN_HEIGHT: u16 = 24;
 /// Height of the top bar (tabs), in rows.
