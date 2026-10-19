@@ -1,7 +1,7 @@
 use crate::{
     command::{Command, ModeCommand},
     input::{
-        key::{Key, KeyCode, KeyExt},
+        key::{Key, KeyCode},
         keymap::Keymap,
         mode::InputMode,
     },
@@ -16,7 +16,7 @@ pub(super) fn default_mode_keymap(keymap: &mut Keymap) -> &mut Keymap {
     );
     keymap.bind(
         normal,
-        vec![Key::shift('a')],
+        vec![Key::char('a')],
         Command::Mode(ModeCommand::InsertAfter),
     );
     keymap.bind(

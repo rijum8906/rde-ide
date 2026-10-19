@@ -2,9 +2,11 @@
 //!
 //! A piece-table-backed document with save state and origin.
 
+use std::fmt::Display;
 use std::fs;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
 use piece_table::PieceTable;
 
@@ -49,7 +51,7 @@ impl Buffer {
 
     pub fn with_contents(path: impl Into<PathBuf>, contents: &str) -> Self {
         Self {
-            piece_table: PieceTable::from_str(contents),
+            piece_table: PieceTable::from_str(contents).unwrap(),
             origin: Origin::File { path: path.into() },
             save_state: SaveState::Clean,
         }
@@ -134,7 +136,7 @@ impl Buffer {
         self.piece_table.is_empty()
     }
 
-    pub fn to_string(&self) -> String {
+    fn to_string_internal(&self) -> String {
         self.piece_table.to_string()
     }
 
@@ -221,5 +223,11 @@ impl Buffer {
 
     fn mark_dirty(&mut self) {
         self.save_state = SaveState::Dirty;
+    }
+}
+
+impl Display for Buffer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string_internal())
     }
 }

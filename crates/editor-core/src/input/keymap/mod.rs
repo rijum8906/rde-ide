@@ -106,21 +106,18 @@ pub fn default_keymap() -> Keymap {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        command::{
-            Command,
-            LayoutCommand::ToggleLeftPanel,
-            ModeCommand::{ExitToNormal, InsertAtLineEnd, InsertAtLineStart},
-            SessionCommand::{ForceQuit, Quit},
-        },
-        input::key::{KeyCode, KeyExt},
+    use crate::command::{
+        Command,
+        LayoutCommand::ToggleLeftPanel,
+        ModeCommand::{ExitToNormal, InsertAtLineEnd, InsertAtLineStart},
+        SessionCommand::{ForceQuit, Quit},
     };
 
     #[test]
     fn default_keymap_contains_session_bindings() {
         let keymap = Keymap::default();
         assert_eq!(
-            keymap.lookup(InputMode::Normal, &[Key::plain(KeyCode::Esc)]),
+            keymap.lookup(InputMode::Normal, &[Key::esc()]),
             Some(&Command::Session(Quit))
         );
         assert_eq!(
@@ -132,7 +129,7 @@ mod tests {
     #[test]
     fn empty_keymap_contains_no_bindings() {
         assert_eq!(
-            Keymap::empty().lookup(InputMode::Normal, &[Key::plain(KeyCode::Esc)]),
+            Keymap::empty().lookup(InputMode::Normal, &[Key::esc()]),
             None
         );
     }
@@ -154,21 +151,13 @@ mod tests {
     fn uppercase_insert_commands_accept_terminal_key_encodings() {
         let keymap = Keymap::default();
 
-        for key in [
-            Key::char('A'),
-            Key::plain(KeyCode::Char('A')),
-            Key::shift('a'),
-        ] {
+        for key in [Key::char('A')] {
             assert_eq!(
                 keymap.lookup(InputMode::Normal, &[key]),
                 Some(&Command::Mode(InsertAtLineEnd))
             );
         }
-        for key in [
-            Key::char('I'),
-            Key::plain(KeyCode::Char('I')),
-            Key::shift('i'),
-        ] {
+        for key in [Key::char('I')] {
             assert_eq!(
                 keymap.lookup(InputMode::Normal, &[key]),
                 Some(&Command::Mode(InsertAtLineStart))

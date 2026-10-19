@@ -1,11 +1,11 @@
 [workspace]
 resolver = "2"
 members = [
-  "apps/ide", "crates/config",
+  "apps/ide",
+  "crates/config",
   "crates/domain",
   "crates/editor",
   "crates/editor-core",
-  "crates/platform",
   "crates/tui",
 ]
 
@@ -22,7 +22,6 @@ domain = { path = "crates/domain" }
 tui = { path = "crates/tui" }
 editor = { path = "crates/editor" }
 editor-core = { path = "crates/editor-core" }
-platform = { path = "crates/platform" }
 
 # Async & Concurrency
 tokio = { version = "1.52.3", features = [

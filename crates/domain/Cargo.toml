@@ -7,7 +7,6 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-editor-core.workspace = true
 
 thiserror.workspace = true
 ratatui.workspace = true

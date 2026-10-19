@@ -4,7 +4,7 @@ use crate::{
         MotionCommand::{Down, FileEnd, FileStart, Left, LineEnd, LineStart, Right, Up},
     },
     input::{
-        key::{Key, KeyCode, KeyExt},
+        key::{Key, KeyCode},
         keymap::Keymap,
         mode::InputMode,
     },

@@ -3,18 +3,24 @@ pub mod command;
 pub mod execute;
 pub mod geometry;
 pub mod render;
+pub mod ui;
 
 use std::time::Duration;
 
-use crossterm::event::{self, Event, KeyEvent};
+use crossterm::event::{self, Event};
 use domain::{error::Result, workspace::WorkspaceState};
 use editor_core::{
     command::{Command, CommandLineCommand::Push, EditCommand::InsertChar},
-    input::{Input, mode::InputMode, resolver::ResolveResult},
-    ui::Ui,
+    input::{
+        Input,
+        key::{Key, Mods},
+        mode::InputMode,
+        resolver::ResolveResult,
+    },
 };
-use platform::events::to_key;
 use ratatui::DefaultTerminal;
+
+use crate::app::ui::Ui;
 
 pub struct App {
     // ============================================================
@@ -65,10 +71,8 @@ impl App {
         while !self.should_quit() {
             if event::poll(Duration::from_millis(16))? {
                 match event::read()? {
-                    Event::Key(ke) => {
-                        if let Some(key) = to_key(ke) {
-                            self.handle_key(key)?;
-                        }
+                    Event::Key(key_event) => {
+                        self.handle_key(Key::from(key_event))?;
                     }
                     Event::Resize(width, height) => {
                         self.ui.layout.screen_size = (height, width);
@@ -99,11 +103,11 @@ impl App {
     // ===========================================================
 
     /// Feed one key. Called by the binary's event loop.
-    pub fn handle_key(&mut self, key_event: KeyEvent) -> Result<()> {
+    pub fn handle_key(&mut self, key: Key) -> Result<()> {
         match self
             .input
             .resolver
-            .feed(self.input.mode, key_event, &self.input.key_map)
+            .feed(self.input.mode, key, &self.input.key_map)
         {
             ResolveResult::Resolved(cmd) => self.execute(cmd)?,
             ResolveResult::Pending => {}
@@ -127,9 +131,7 @@ impl App {
     fn handle_unhandled(&mut self, keys: editor_core::input::resolver::Pending) -> Result<()> {
         for key in keys {
             if let editor_core::input::key::KeyCode::Char(c) = key.code {
-                if !key.modifiers.intersects(
-                    crossterm::event::KeyModifiers::CONTROL | crossterm::event::KeyModifiers::ALT,
-                ) {
+                if key.mods != Mods::CTRL && key.mods != Mods::ALT {
                     match self.input.mode {
                         InputMode::Insert => self.execute(Command::Edit(InsertChar(c)))?,
                         InputMode::Command => self.execute(Command::CommandLine(Push(c)))?,
@@ -157,10 +159,7 @@ impl App {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use editor_core::{
-        command::SessionCommand::Quit,
-        input::key::{KeyCode, KeyExt},
-    };
+    use editor_core::command::SessionCommand::Quit;
 
     #[test]
     fn test_app_should_quit() {
@@ -182,7 +181,7 @@ mod tests {
     fn test_handle_escape_quits() {
         let mut app = App::new().unwrap();
         app.is_running = true;
-        app.handle_key(KeyEvent::plain(KeyCode::Esc)).unwrap();
+        app.handle_key(Key::esc()).unwrap();
         assert!(!app.is_running);
         assert!(app.should_quit());
     }
@@ -191,7 +190,7 @@ mod tests {
     fn test_handle_ctrl_q_force_quits() {
         let mut app = App::new().unwrap();
         app.is_running = true;
-        app.handle_key(KeyEvent::ctrl('q')).unwrap();
+        app.handle_key(Key::ctrl('q')).unwrap();
         assert!(!app.is_running);
         assert!(app.should_quit());
     }
@@ -200,7 +199,7 @@ mod tests {
     fn test_handle_ctrl_c_force_quits() {
         let mut app = App::new().unwrap();
         app.is_running = true;
-        app.handle_key(KeyEvent::ctrl('c')).unwrap();
+        app.handle_key(Key::ctrl('c')).unwrap();
         assert!(!app.is_running);
         assert!(app.should_quit());
     }
@@ -210,7 +209,7 @@ mod tests {
         let mut app = App::new().unwrap();
         app.is_running = true;
         app.input.mode = InputMode::Insert;
-        app.handle_key(KeyEvent::ctrl('j')).unwrap();
+        app.handle_key(Key::ctrl('j')).unwrap();
         assert_eq!(app.input.mode, InputMode::Normal);
     }
 }

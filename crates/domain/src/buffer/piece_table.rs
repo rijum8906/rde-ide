@@ -4,9 +4,9 @@
 //! with a list of "pieces" that reference ranges in either. Insert and delete
 //! are O(number of pieces touched) rather than O(document length).
 
-use std::ops::Range;
+use std::{ops::Range, str::FromStr};
 
-use crate::error::{DomainError, DomainResult, IdeError, Result};
+use crate::error::{DomainError, DomainResult};
 
 /// Which buffer a piece refers to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -53,6 +53,25 @@ impl Default for PieceTable {
     }
 }
 
+impl FromStr for PieceTable {
+    type Err = DomainError;
+    fn from_str(s: &str) -> std::prelude::v1::Result<Self, Self::Err> {
+        if s.is_empty() {
+            return Ok(Self::new());
+        }
+        Ok(Self {
+            original: s.to_string(),
+            add: String::new(),
+            pieces: vec![Piece {
+                source: Source::Original,
+                start: 0,
+                len: s.len(),
+            }],
+            total_len: s.len(),
+        })
+    }
+}
+
 impl PieceTable {
     pub fn new() -> Self {
         Self {
@@ -60,22 +79,6 @@ impl PieceTable {
             add: String::new(),
             pieces: Vec::new(),
             total_len: 0,
-        }
-    }
-
-    pub fn from_str(text: &str) -> Self {
-        if text.is_empty() {
-            return Self::new();
-        }
-        Self {
-            original: text.to_string(),
-            add: String::new(),
-            pieces: vec![Piece {
-                source: Source::Original,
-                start: 0,
-                len: text.len(),
-            }],
-            total_len: text.len(),
         }
     }
 
@@ -266,7 +269,7 @@ impl PieceTable {
     }
 
     pub fn replace_all(&mut self, text: &str) {
-        *self = Self::from_str(text);
+        *self = Self::from_str(text).unwrap();
     }
 
     pub fn string(&self) -> String {
@@ -346,12 +349,5 @@ impl PieceTable {
 impl std::fmt::Display for PieceTable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.string())
-    }
-}
-
-impl std::str::FromStr for PieceTable {
-    type Err = IdeError;
-    fn from_str(s: &str) -> Result<Self> {
-        Ok(Self::from_str(s))
     }
 }

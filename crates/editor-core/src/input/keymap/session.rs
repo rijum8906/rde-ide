@@ -1,7 +1,7 @@
 use crate::{
     command::{Command, SessionCommand},
     input::{
-        key::{Key, KeyCode, KeyExt},
+        key::{Key, KeyCode},
         keymap::Keymap,
         mode::InputMode,
     },

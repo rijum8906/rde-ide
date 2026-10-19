@@ -1,10 +1,6 @@
 use crate::{
     command::{Command, LayoutCommand},
-    input::{
-        key::{Key, KeyExt},
-        keymap::Keymap,
-        mode::InputMode,
-    },
+    input::{key::Key, keymap::Keymap, mode::InputMode},
 };
 
 pub(super) fn default_layout_keymap(keymap: &mut Keymap) -> &mut Keymap {

@@ -1,7 +1,7 @@
 use crate::{
     command::{Command, WorkspaceCommand},
     input::{
-        key::{Key, KeyCode, KeyExt},
+        key::{Key, KeyCode, Mods},
         keymap::Keymap,
         mode::InputMode,
     },
@@ -16,7 +16,7 @@ pub(super) fn default_workspace_keymap(keymap: &mut Keymap) -> &mut Keymap {
     );
     keymap.bind(
         normal,
-        vec![Key::plain(KeyCode::BackTab)],
+        vec![Key::new(KeyCode::Tab, Mods::SHIFT)],
         Command::Workspace(WorkspaceCommand::PrevBuffer),
     );
     keymap.bind(
