@@ -139,18 +139,18 @@ filter output through `grep`/`head`, preserve the command's status
 - These commands panic today because their handlers are `todo!()`: buffer
   switching/closing through key bindings (`Tab`, `Ctrl+W`,
   `b n`/`b p`/`b d`/`b D`), fullscreen (`Ctrl+F`), panel focus,
-  paragraph/page motions, yank/paste, save-as, save-all, open-file, and
-  new-scratch-buffer. The command palette's `:bn`, `:bp`, `:e`, and
-  `:w <path>` cover some of these paths. Word motions (`w`/`b`/`e`) and
-  undo/redo (`u`/`Ctrl+R`) are implemented.
+  paragraph/page motions, undo/redo, yank/paste, save-as, save-all,
+  open-file, and new-scratch-buffer. The command palette's `:bn`, `:bp`, `:e`,
+  and `:w <path>` cover some of these paths. Word motions (`w`/`b`/`e` and
+  `W`/`B`/`E`) are implemented.
 - `Quit`/`ForceQuit` are intercepted in `App::handle_key`, not in
   `App::tick`.
 - The bottom bar receives a 0-indexed `(col, line)` although its view model
   documents `(line, col)`.
 - Some dependencies are declared but unused (`tokio` in `rde-ide`,
-  `color-eyre` in `tui` and `editor`, `ratatui` in `domain` and `editor`,
-  `crossterm` in `editor`). Removing them is welcome when you touch those
-  manifests; don't add more.
+  `color-eyre` in `tui` and `editor`, `ratatui` in `editor`, `crossterm` in
+  `editor`). Removing them is welcome when you touch those manifests; don't
+  add more.
 
 ## Definition of done
 

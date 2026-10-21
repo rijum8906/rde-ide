@@ -61,6 +61,9 @@ Motions and edits follow Vim conventions where they are implemented.
 | `w` | Start of the next word |
 | `b` | Start of the previous word |
 | `e` | End of the current or next word |
+| `W` | Start of the next big word (whitespace-delimited) |
+| `B` | Start of the previous big word |
+| `E` | End of the current or next big word |
 | `gg` | Start of file |
 | `G` | End of file |
 
@@ -89,11 +92,6 @@ Arrow keys also move the cursor in insert mode.
 | `Enter` | Insert a newline (insert mode) |
 | `Backspace` | Delete the character before the cursor (insert mode) |
 | `dd` | Delete the current line (normal mode) |
-| `u` | Undo the last edit group (normal mode) |
-| `Ctrl+R` | Redo the last undone group (normal mode) |
-
-Typing and backspaces are grouped, so one undo removes a typed run rather
-than a single character; newlines start a new undo step.
 
 ### Command mode
 
@@ -143,8 +141,8 @@ Implemented end to end:
 - Opening a buffer at startup and rendering it with a gutter, cursor, and
   current-line highlight.
 - Insert, newline, backspace, and delete-line edits.
-- Single-step, line, file, and word (`w`/`b`/`e`) motions.
-- Per-buffer undo/redo with coalesced typing runs (`u` / `Ctrl+R`).
+- Single-step, line, file, and word (`w`/`b`/`e`) and big-word (`W`/`B`/`E`)
+  motions.
 - Normal/insert/visual/command mode transitions, including the edits implied
   by `a`, `A`, `I`, `o`, and `O`.
 - A floating command palette with caret editing, history browsing, and the
@@ -158,6 +156,7 @@ Scaffolded but not implemented — invoking these currently panics with
 - Buffer switching and closing (`Tab`, `Ctrl+W`, `b n`/`b p`/`b d`/`b D`).
 - Fullscreen mode, the right panel, and panel focus.
 - Paragraph, page, and bracket motions.
+- Undo/redo (`u`, `Ctrl+R`).
 - Yank/paste and motion-prefixed changes (`d{motion}`, `c{motion}`,
   `y{motion}`).
 - Save-as, save-all, open-file, and new-scratch-buffer prompts.

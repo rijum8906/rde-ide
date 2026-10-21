@@ -6,8 +6,8 @@
 pub const BIG_WORD_BOUNDARY: [char; 4] = [' ', '\t', '\n', '\r'];
 pub const BIG_WORD_BOUNDARY_BYTES: [u8; 4] = [b' ', b'\t', b'\n', b'\r'];
 
-pub const WORD_BOUNDARY: [char; 5] = [' ', '-', '\t', '\n', '\r'];
-pub const WORD_BOUNDARY_BYTES: [u8; 5] = [b' ', b'-', b'\t', b'\n', b'\r'];
+pub const WORD_BOUNDARY: [char; 6] = [' ', '-', '.', '\t', '\n', '\r'];
+pub const WORD_BOUNDARY_BYTES: [u8; 6] = [b' ', b'-', b'.', b'\t', b'\n', b'\r'];
 
 pub fn is_big_word_boundary(c: char) -> bool {
     BIG_WORD_BOUNDARY.contains(&c)
@@ -30,13 +30,13 @@ impl PieceTable {
     /// O(bytes walked). Walk stops at the first word boundary after finding
     /// a word char, so worst case is the whole document if there are no
     /// boundaries — otherwise proportional to the distance to the next word end.
-    pub fn next_word_range(&mut self, pos: usize) -> Option<(usize, usize)> {
+    pub fn next_word_range(&self, pos: usize) -> Option<(usize, usize)> {
         self.next_word_range_with(pos, is_word_boundary)
     }
 
     /// Same as [`Self::next_word_range`] but using the "big word" boundary
     /// set (`-` does NOT break words; Ctrl+Shift+Right semantics).
-    pub fn next_big_word_range(&mut self, pos: usize) -> Option<(usize, usize)> {
+    pub fn next_big_word_range(&self, pos: usize) -> Option<(usize, usize)> {
         self.next_word_range_with(pos, is_big_word_boundary)
     }
 
@@ -48,19 +48,19 @@ impl PieceTable {
     /// - If `pos == 0`, returns `None`.
     ///
     /// O(bytes walked) — symmetric to [`Self::next_word_range`].
-    pub fn prev_word_range(&mut self, pos: usize) -> Option<(usize, usize)> {
+    pub fn prev_word_range(&self, pos: usize) -> Option<(usize, usize)> {
         self.prev_word_range_with(pos, is_word_boundary)
     }
 
     /// Same as [`Self::prev_word_range`] but using the "big word" boundary set.
-    pub fn prev_big_word_range(&mut self, pos: usize) -> Option<(usize, usize)> {
+    pub fn prev_big_word_range(&self, pos: usize) -> Option<(usize, usize)> {
         self.prev_word_range_with(pos, is_big_word_boundary)
     }
 
     // ---- shared cores ----------------------------------------------------
 
     fn next_word_range_with(
-        &mut self,
+        &self,
         pos: usize,
         is_boundary: fn(char) -> bool,
     ) -> Option<(usize, usize)> {
@@ -85,7 +85,7 @@ impl PieceTable {
     }
 
     fn prev_word_range_with(
-        &mut self,
+        &self,
         pos: usize,
         is_boundary: fn(char) -> bool,
     ) -> Option<(usize, usize)> {
@@ -110,108 +110,147 @@ impl PieceTable {
 
     // ---- piece-aware character walks -------------------------------------
     //
-    // These iterate `char`s across piece boundaries without rendering the
-    // whole document. Each helper assumes its start position is on a char
-    // boundary (guaranteed by callers / cursor invariants).
+    // Each helper locates `pos` in the piece list once, then walks the pieces
+    // in order. Scanning piece slices directly keeps the cost proportional to
+    // the bytes walked instead of resolving a piece from the start for every
+    // character (which would be O(pieces) per step). Each helper assumes its
+    // start position is on a char boundary (guaranteed by callers / cursor
+    // invariants).
+
+    /// Index of the piece containing `pos`, plus the byte offset within it.
+    /// `pos == doc_len` maps to `(pieces.len(), 0)`.
+    fn locate_piece(&self, pos: usize) -> (usize, usize) {
+        let mut doc = 0usize;
+        for (index, piece) in self.pieces.iter().enumerate() {
+            let end = doc + piece.len;
+            if pos < end {
+                return (index, pos - doc);
+            }
+            doc = end;
+        }
+        (self.pieces.len(), 0)
+    }
 
     /// Advance from `pos` past every char satisfying `is_boundary`.
     /// Returns the first position whose char does NOT satisfy it (or `doc_len`).
-    fn skip_forward(&mut self, mut pos: usize, is_boundary: fn(char) -> bool) -> usize {
-        while pos < self.doc_len {
-            let Some((c, next)) = self.char_at(pos) else {
-                break;
-            };
-            if !is_boundary(c) {
-                break;
+    fn skip_forward(&self, pos: usize, is_boundary: fn(char) -> bool) -> usize {
+        let (mut index, mut local) = self.locate_piece(pos);
+        let mut piece_start_doc = pos - local;
+
+        while index < self.pieces.len() {
+            let piece = self.pieces[index];
+            let slice = &self.source(piece.kind)[piece.start..piece.end()];
+
+            for ch in slice[local..].chars() {
+                if !is_boundary(ch) {
+                    return piece_start_doc + local;
+                }
+                local += ch.len_utf8();
             }
-            pos = next;
+
+            piece_start_doc += piece.len;
+            index += 1;
+            local = 0;
         }
-        pos
+        self.doc_len
     }
 
     /// Advance from `pos` until a char satisfying `is_boundary` (or EOF).
     /// Returns the position of that char (or `doc_len`).
-    fn skip_forward_non_boundary(
-        &mut self,
-        mut pos: usize,
-        is_boundary: fn(char) -> bool,
-    ) -> usize {
-        while pos < self.doc_len {
-            let Some((c, next)) = self.char_at(pos) else {
-                break;
-            };
-            if is_boundary(c) {
-                break;
+    fn skip_forward_non_boundary(&self, pos: usize, is_boundary: fn(char) -> bool) -> usize {
+        let (mut index, mut local) = self.locate_piece(pos);
+        let mut piece_start_doc = pos - local;
+
+        while index < self.pieces.len() {
+            let piece = self.pieces[index];
+            let slice = &self.source(piece.kind)[piece.start..piece.end()];
+
+            for ch in slice[local..].chars() {
+                if is_boundary(ch) {
+                    return piece_start_doc + local;
+                }
+                local += ch.len_utf8();
             }
-            pos = next;
+
+            piece_start_doc += piece.len;
+            index += 1;
+            local = 0;
         }
-        pos
+        self.doc_len
     }
 
     /// Retreat from `pos` past every char satisfying `is_boundary`.
     /// Returns the position *after* the last boundary char skipped (or 0).
-    fn skip_backward(&mut self, mut pos: usize, is_boundary: fn(char) -> bool) -> usize {
-        while pos > 0 {
-            let Some((c, prev)) = self.char_before(pos) else {
-                break;
-            };
-            if !is_boundary(c) {
-                break;
-            }
-            pos = prev;
+    fn skip_backward(&self, pos: usize, is_boundary: fn(char) -> bool) -> usize {
+        if pos == 0 {
+            return 0;
         }
-        pos
+        let (mut index, mut local) = self.locate_piece(pos);
+        let mut piece_start_doc = pos - local;
+
+        loop {
+            if local == 0 {
+                if index == 0 {
+                    return 0;
+                }
+                index -= 1;
+                let piece = self.pieces[index];
+                piece_start_doc -= piece.len;
+                local = piece.len;
+            }
+
+            let piece = self.pieces[index];
+            let slice = &self.source(piece.kind)[piece.start..piece.end()][..local];
+            let Some(ch) = slice.chars().next_back() else {
+                return piece_start_doc;
+            };
+            if !is_boundary(ch) {
+                return piece_start_doc + local;
+            }
+            local -= ch.len_utf8();
+        }
     }
 
     /// Retreat from `pos` until a char satisfying `is_boundary` (or 0).
     /// Returns the position of the first non-boundary char's start (or 0).
-    fn skip_backward_non_boundary(
-        &mut self,
-        mut pos: usize,
-        is_boundary: fn(char) -> bool,
-    ) -> usize {
-        while pos > 0 {
-            let Some((c, prev)) = self.char_before(pos) else {
-                break;
-            };
-            if is_boundary(c) {
-                break;
-            }
-            pos = prev;
+    fn skip_backward_non_boundary(&self, pos: usize, is_boundary: fn(char) -> bool) -> usize {
+        if pos == 0 {
+            return 0;
         }
-        pos
+        let (mut index, mut local) = self.locate_piece(pos);
+        let mut piece_start_doc = pos - local;
+
+        loop {
+            if local == 0 {
+                if index == 0 {
+                    return 0;
+                }
+                index -= 1;
+                let piece = self.pieces[index];
+                piece_start_doc -= piece.len;
+                local = piece.len;
+            }
+
+            let piece = self.pieces[index];
+            let slice = &self.source(piece.kind)[piece.start..piece.end()][..local];
+            let Some(ch) = slice.chars().next_back() else {
+                return piece_start_doc;
+            };
+            if is_boundary(ch) {
+                return piece_start_doc + local;
+            }
+            local -= ch.len_utf8();
+        }
     }
 
     // ---- piece-aware single-char accessors -------------------------------
-    //
-    // Resolve a document byte offset to the char occupying it. O(pieces).
-    // For piece-heavy documents, cache the last (piece_index, doc_offset)
-    // if you call these in hot loops — see note at the end.
 
-    /// Char starting at document byte offset `pos`, plus the offset of the
-    /// next char. Returns `None` if `pos >= doc_len`.
+    /// Byte offset of the char immediately before `pos`, or `None` at 0.
     ///
-    /// Panics in debug if `pos` is not on a char boundary.
-    fn char_at(&self, pos: usize) -> Option<(char, usize)> {
-        if pos >= self.doc_len {
-            return None;
-        }
-        let mut doc = 0usize;
-        for piece in &self.pieces {
-            let piece_end = doc + piece.len;
-            if pos < piece_end {
-                let src = match piece.kind {
-                    PieceKind::Original => &self.original_text,
-                    PieceKind::Additive => &self.additive_text,
-                };
-                let src_pos = piece.start + (pos - doc);
-                debug_assert!(src.is_char_boundary(src_pos));
-                let c = src[src_pos..].chars().next().unwrap();
-                return Some((c, pos + c.len_utf8()));
-            }
-            doc = piece_end;
-        }
-        None
+    /// This is the inclusive position of the last character of the range that
+    /// ends at `pos`, which is where a cursor lands after a backward motion.
+    pub fn prev_char_boundary(&self, pos: usize) -> Option<usize> {
+        self.char_before(pos).map(|(_, start)| start)
     }
 
     /// Char ending immediately before document byte offset `pos`, plus the
@@ -251,7 +290,7 @@ mod word_nav_tests {
 
     #[test]
     fn next_word_basic() {
-        let mut t = pt("hello world");
+        let t = pt("hello world");
         assert_eq!(t.next_word_range(0), Some((0, 5)));
         assert_eq!(t.next_word_range(5), Some((6, 11))); // from the space
         assert_eq!(t.next_word_range(6), Some((6, 11))); // from start of "world"
@@ -260,45 +299,45 @@ mod word_nav_tests {
 
     #[test]
     fn next_word_from_mid_word_returns_remainder() {
-        let mut t = pt("hello world");
+        let t = pt("hello world");
         assert_eq!(t.next_word_range(2), Some((2, 5))); // "llo"
     }
 
     #[test]
     fn next_word_skips_leading_boundaries() {
-        let mut t = pt("   hello");
+        let t = pt("   hello");
         assert_eq!(t.next_word_range(0), Some((3, 8)));
     }
 
     #[test]
     fn next_word_only_boundaries_returns_none() {
-        let mut t = pt("   \n\t ");
+        let t = pt("   \n\t ");
         assert_eq!(t.next_word_range(0), None);
     }
 
     #[test]
     fn next_word_hyphen_is_boundary() {
-        let mut t = pt("hello-world");
+        let t = pt("hello-world");
         assert_eq!(t.next_word_range(0), Some((0, 5)));
         assert_eq!(t.next_word_range(5), Some((6, 11))); // skips '-' then "world"
     }
 
     #[test]
     fn next_big_word_ignores_hyphen() {
-        let mut t = pt("hello-world");
+        let t = pt("hello-world");
         assert_eq!(t.next_big_word_range(0), Some((0, 11)));
     }
 
     #[test]
     fn next_word_crlf_skipped_as_one_run() {
-        let mut t = pt("foo\r\nbar");
+        let t = pt("foo\r\nbar");
         assert_eq!(t.next_word_range(0), Some((0, 3))); // "foo"
         assert_eq!(t.next_word_range(3), Some((5, 8))); // skip "\r\n", get "bar"
     }
 
     #[test]
     fn prev_word_basic() {
-        let mut t = pt("hello world");
+        let t = pt("hello world");
         assert_eq!(t.prev_word_range(11), Some((6, 11)));
         assert_eq!(t.prev_word_range(6), Some((0, 5))); // from space
         assert_eq!(t.prev_word_range(0), None);
@@ -306,26 +345,26 @@ mod word_nav_tests {
 
     #[test]
     fn prev_word_from_mid_word_returns_prefix() {
-        let mut t = pt("hello world");
+        let t = pt("hello world");
         assert_eq!(t.prev_word_range(8), Some((6, 8))); // "wo"
     }
 
     #[test]
     fn prev_word_only_boundaries_returns_none() {
-        let mut t = pt("   ");
+        let t = pt("   ");
         assert_eq!(t.prev_word_range(3), None);
     }
 
     #[test]
     fn prev_word_crlf() {
-        let mut t = pt("foo\r\nbar");
+        let t = pt("foo\r\nbar");
         assert_eq!(t.prev_word_range(8), Some((5, 8))); // "bar"
         assert_eq!(t.prev_word_range(5), Some((0, 3))); // skip "\r\n", get "foo"
     }
 
     #[test]
     fn next_prev_roundtrip() {
-        let mut t = pt("alpha beta gamma");
+        let t = pt("alpha beta gamma");
         let (s, e) = t.next_word_range(0).unwrap(); // "alpha"
         assert_eq!((s, e), (0, 5));
         let (s2, e2) = t.next_word_range(e).unwrap(); // "beta"
@@ -336,7 +375,7 @@ mod word_nav_tests {
 
     #[test]
     fn multibyte_words() {
-        let mut t = pt("héllo wörld");
+        let t = pt("héllo wörld");
         // 'é' is 2 bytes, 'ö' is 2 bytes.
         assert_eq!(t.next_word_range(0), Some((0, 6))); // "héllo"
         // doc bytes: h(1) é(2) l l o = 6 bytes; space = 1; w(1) ö(2) r l d = 6
@@ -356,7 +395,7 @@ mod word_nav_tests {
 
     #[test]
     fn empty_document() {
-        let mut t = pt("");
+        let t = pt("");
         assert_eq!(t.next_word_range(0), None);
         assert_eq!(t.prev_word_range(0), None);
     }

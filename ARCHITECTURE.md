@@ -185,11 +185,13 @@ of them. Concatenating the pieces in order renders the document.
   pieces on first read after an edit and cached in a `OnceCell`, so no stale
   list is observable. `line_count` is `line_breaks.len() + 1`, which makes an
   empty document one empty line.
-- `line_range` and `line` return byte ranges and line text. `slice`, `text`,
-  `char_count`, `char_to_byte_offset`, and `byte_to_char_offset` walk the
-  pieces and are O(document); word helpers (`next_word_range`,
-  `prev_word_range`, `next_big_word_range`, `prev_big_word_range`) also work
-  in byte offsets and scan linearly. This is fine for user-driven motions.
+- `line_range`, `line`, and `line_col_at` return byte ranges, line text, and
+  a `(line, column)` position. `slice`, `text`, `char_count`,
+  `char_to_byte_offset`, and `byte_to_char_offset` walk the pieces and are
+  O(document). Word helpers (`next_word_range`, `prev_word_range`, the `big`
+  variants, and the start/end conveniences on `Buffer`) locate the starting
+  piece once, then scan its slices in order, so their cost is proportional to
+  the bytes walked rather than to a piece lookup per character.
 
 `replace_all` drops the piece list and adopts new text as a single original
 piece. There is no undo/redo history.
@@ -197,18 +199,25 @@ piece. There is no undo/redo history.
 ### Buffer (`domain::buffer`)
 
 `Buffer` wraps a `PieceTable` with an `Origin` (`File { path }` or
-`Scratch { name }`) and a `SaveState` (`NeverSaved`, `Clean`, `Dirty`). It
-exposes:
+`Scratch { name }`) and a `SaveState` (`NeverSaved`, `Clean`, `Dirty`). Its
+implementation is split like the piece table's: `insert`, `delete`, `line`,
+and `word` submodules, with construction, metadata, and persistence in
+`mod.rs`. It exposes:
 
 - byte-oriented mutation: `insert(byte_offset, text)`, `delete(byte_range)`,
   `replace_all(text)`;
 - character-oriented queries: `line_range`, `line`, `line_count`,
   `line_char_len`, `char_to_byte_offset`, `is_empty`;
+- word motions in byte offsets: `next_word_start`/`next_word_end`,
+  `prev_word_start`/`prev_word_end`, the `big` variants (`W`/`E`/`B`/`gE`),
+  and the underlying `*_range` methods;
 - persistence: `open_file`, `save`, `save_to_path`, `rename_to`.
 
 `line_range` converts the piece table's byte range to characters, because the
-editor cursor is character-based. Any content change marks the buffer dirty;
-only a successful save marks it clean.
+editor cursor is character-based. Word `*_end` motions return the byte offset
+of the word's last character, so a cursor can land on it; `*_range` keeps the
+exclusive range. Any content change marks the buffer dirty; only a successful
+save marks it clean.
 
 ### Workspace (`domain::workspace`)
 
@@ -409,29 +418,29 @@ planned.
   module they exercise.
 - Filesystem tests use `tempfile` (`domain` dev-dependency) and never touch
   user paths.
-- Current coverage is 128 tests: 70 in `domain` (piece-tree edits, balance,
-  history, lines and words, model-based edit/replay, buffer persistence,
-  workspace and file-tree behavior), 34 in
-  `tui` (command-line state plus palette, notification, toast, and
-  text-wrapping rendering), 17 in `editor` (ex-command parsing, quit behavior,
-  notification/toast bookkeeping, and undo/redo cursor placement), and 7 in
-  `editor-core` (keymap and mode display).
+- Current coverage is 166 tests: 106 in `domain` (piece-table insert/delete,
+  lines, word motions, model-based edit/replay, `Buffer` integration tests,
+  persistence, workspace and file-tree behavior), 34 in `tui` (command-line
+  state plus palette, notification, toast, and text-wrapping rendering), 17 in
+  `editor` (ex-command parsing, quit behavior, notification/toast bookkeeping,
+  and word-motion cursor placement), and 9 in `editor-core` (keymap bindings
+  and mode display).
 - There are no integration or TUI snapshot tests yet.
 
 ## Performance notes
 
-- The piece tree makes edits O(log m) expected and keeps byte/char/line
-  counts O(1). On a 4.8 MB, 200k-line document (release build) a single edit
-  costs about 2 µs, an offset conversion about 3 µs, and fetching a line about
-  10 µs; loading the document takes about 15 ms.
-- Undo stores the affected text, not a document snapshot, so a history of a
-  thousand groups costs roughly the edited text plus the tree updates.
+- Edits rewrite only the affected pieces: `insert` splits the piece at the
+  offset, and `delete` rebuilds the list from the surviving prefix, trimmed
+  boundary pieces, and suffix. Cost is O(pieces) per edit.
+- Character- and line-oriented queries (`slice`, `text`, `line`, line/column
+  conversion, char/byte conversion) walk the piece list, so they are
+  O(document) and invalidate nothing.
+- Word motions (`w`, `b`, `e`, `W`, `B`, `E`) locate the starting piece once
+  and then scan character slices in the motion direction. Their cost is
+  proportional to the bytes traversed, not to a piece lookup per character;
+  they still walk the piece list to find the starting position.
 - The editor view fetches only the visible viewport (`scroll_y` through
-  `scroll_y + height`), so redraw cost no longer grows with document length.
-- Word motions (`w`, `b`, `e`) start from the cursor and walk characters in
-  one direction with a piece-tree iterator; their cost is proportional to the
-  distance to the word, not to its position in the document. On the same
-  benchmark document, `prev_word_start` (the `b` motion) costs about 0.6 µs.
+  `scroll_y + height`), so redraw cost does not grow with document length.
 - The left panel re-scans the root directory on every frame
   (`scan_dir` in `render/left_panel.rs`). This is filesystem I/O per frame and
   should be cached and refreshed on change.
@@ -440,9 +449,9 @@ planned.
 
 - The startup path is hard-coded in `App::new`.
 - Buffer switching/closing through key bindings, fullscreen, the right
-  panel, paragraph/page motions, and yank/paste are `todo!()`; invoking them
-  panics. (`:bn`/`:bp` work through the command palette; word motions and
-  undo/redo are implemented.)
+  panel, paragraph/page motions, yank/paste, and undo/redo are `todo!()`;
+  invoking them panics. (`:bn`/`:bp` work through the command palette; word
+  motions `w`/`b`/`e`/`W`/`B`/`E` are implemented.)
 - The bottom bar always renders in status mode; `BottomBarMode::Command` is
   never selected because the command palette now owns command-line display.
 - `crates/config` is an empty placeholder, and several crates declare unused

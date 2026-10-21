@@ -26,6 +26,7 @@ pub enum MotionCommand {
     WordEnd,
     NextBigWordStart,
     PrevBigWordStart,
+    BigWordEnd,
 
     // Paragraph jumps.
     NextParagraphStart,

@@ -40,6 +40,51 @@ impl PieceTable {
     pub fn line(&self, line: usize) -> Option<String> {
         self.line_range(line).map(|range| self.slice(range))
     }
+
+    /// Map a document byte offset to a 0-based `(line, column)` pair, where
+    /// the column counts characters, not bytes.
+    ///
+    /// A position on a `\n` reports the end of that line. An offset past the
+    /// document, or inside a multi-byte character, returns `None`.
+    ///
+    /// O(log lines + pieces + bytes on the line).
+    pub fn line_col_at(&self, byte_offset: usize) -> Option<(usize, usize)> {
+        if byte_offset > self.len() || !self.is_char_boundary(byte_offset) {
+            return None;
+        }
+
+        let breaks = self.line_breaks();
+        let line = breaks.partition_point(|&newline| newline < byte_offset);
+        let line_start = if line == 0 { 0 } else { breaks[line - 1] + 1 };
+
+        Some((line, self.char_count_in(line_start, byte_offset)))
+    }
+
+    /// Number of chars in the byte range `start..end`.
+    fn char_count_in(&self, start: usize, end: usize) -> usize {
+        let mut count = 0usize;
+        let mut doc = 0usize;
+
+        for piece in &self.pieces {
+            let piece_start = doc;
+            let piece_end = doc + piece.len;
+            doc = piece_end;
+
+            if piece_end <= start {
+                continue;
+            }
+            if piece_start >= end {
+                break;
+            }
+
+            let from = start.saturating_sub(piece_start);
+            let to = (end - piece_start).min(piece.len);
+            let src = self.source(piece.kind);
+            count += src[piece.start + from..piece.start + to].chars().count();
+        }
+
+        count
+    }
 }
 
 #[cfg(test)]
@@ -135,5 +180,19 @@ mod line_range_tests {
         let t = pt("a\nb");
         assert_eq!(t.line_range(2), None);
         assert_eq!(t.line_range(usize::MAX), None);
+    }
+
+    #[test]
+    fn line_col_at_maps_bytes_to_char_columns() {
+        let t = pt("héllo\nwörld");
+
+        assert_eq!(t.line_col_at(0), Some((0, 0)));
+        assert_eq!(t.line_col_at(3), Some((0, 2)));
+        assert_eq!(t.line_col_at(6), Some((0, 5))); // the newline
+        assert_eq!(t.line_col_at(7), Some((1, 0)));
+        assert_eq!(t.line_col_at(13), Some((1, 5))); // end of document
+
+        assert_eq!(t.line_col_at(2), None); // inside 'é'
+        assert_eq!(t.line_col_at(14), None);
     }
 }

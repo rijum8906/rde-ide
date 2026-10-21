@@ -1,7 +1,7 @@
 //! Insertion into a [`PieceTable`]: splice new text in at a byte offset.
 
 use crate::{
-    error::{TextError, TextResult},
+    error::{PositionError, TextError, TextResult},
     piece_table::{Piece, PieceKind, PieceTable},
 };
 
@@ -21,12 +21,12 @@ impl PieceTable {
         if text.is_empty() {
             return Err(TextError::EmptyInsertText);
         }
-
-        // Invariant: insert index must be on a char boundary of the rendered text.
-        debug_assert!(
-            self.is_char_boundary(index),
-            "insert index {index} is not on a char boundary"
-        );
+        if !self.is_char_boundary(index) {
+            return Err(TextError::InvalidInsertPosition {
+                at: index,
+                reason: PositionError::NotACharBoundary,
+            });
+        }
 
         // Capture EOF-ness BEFORE mutating doc_len.
         let is_eof = index == self.doc_len;
