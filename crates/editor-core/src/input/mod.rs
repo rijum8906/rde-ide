@@ -24,3 +24,9 @@ pub struct Input {
     pub resolver: Resolver,
     pub key_map: Keymap,
 }
+
+impl AsRef<InputMode> for Input {
+    fn as_ref(&self) -> &InputMode {
+        &self.mode
+    }
+}

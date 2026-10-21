@@ -39,7 +39,8 @@ filter output through `grep`/`head`, preserve the command's status
 | --- | --- |
 | `apps/ide/src/app.rs` | `App`: owns workspace, input, UI; event loop and key fall-through |
 | `apps/ide/src/main.rs` | Terminal setup/teardown; runs `App` |
-| `crates/domain/` | `PieceTable`, `Buffer`, `WorkspaceState`, `IdeError`/`DomainError`, file-tree scan |
+| `crates/domain/src/piece_table/` | `PieceTable`: pieces, edits, lines, word motions |
+| `crates/domain/` | `Buffer`, `WorkspaceState`, `IdeError`/`DomainError`, file-tree scan |
 | `crates/editor-core/src/command/` | `Command` and category enums |
 | `crates/editor-core/src/input/` | `Key`, `Keymap`, `InputMode`, `Resolver` |
 | `crates/editor/src/execute/` | One free-function handler per command category |
@@ -80,6 +81,7 @@ filter output through `grep`/`head`, preserve the command's status
 | Behavior for an action | `editor/src/execute/<category>.rs` |
 | New `:` ex command | `editor/src/execute/command_line.rs` |
 | Reusable buffer/cursor operation | `editor/src/mutation/` |
+| Text storage or line/word behavior | `domain/src/piece_table/` |
 | Document or workspace behavior | `domain/src/buffer/` or `domain/src/workspace/` |
 | Persistent UI state | `tui/src/state/` |
 | Data a widget needs each frame | `tui/src/viewmodel/` |
@@ -137,13 +139,12 @@ filter output through `grep`/`head`, preserve the command's status
 - These commands panic today because their handlers are `todo!()`: buffer
   switching/closing through key bindings (`Tab`, `Ctrl+W`,
   `b n`/`b p`/`b d`/`b D`), fullscreen (`Ctrl+F`), panel focus,
-  word/paragraph/page motions, yank/paste/undo/redo, save-as, save-all,
-  open-file, and new-scratch-buffer. The command palette's `:bn`, `:bp`,
-  `:e`, and `:w <path>` cover some of these paths.
+  paragraph/page motions, yank/paste, save-as, save-all, open-file, and
+  new-scratch-buffer. The command palette's `:bn`, `:bp`, `:e`, and
+  `:w <path>` cover some of these paths. Word motions (`w`/`b`/`e`) and
+  undo/redo (`u`/`Ctrl+R`) are implemented.
 - `Quit`/`ForceQuit` are intercepted in `App::handle_key`, not in
   `App::tick`.
-- Vertical scrolling is computed but not applied by the editor widget; the
-  cursor disappears below the viewport.
 - The bottom bar receives a 0-indexed `(col, line)` although its view model
   documents `(line, col)`.
 - Some dependencies are declared but unused (`tokio` in `rde-ide`,

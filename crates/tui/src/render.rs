@@ -63,7 +63,7 @@ fn render_ui(ws: &mut WorkspaceState, ui: &mut Ui, input: &Input, frame: &mut Fr
     render_top_bar(ws, ui, frame);
 
     // Step 3: render the bottom bar
-    render_bottom_bar(ws, ui, frame, input.mode);
+    render_bottom_bar(ws, ui, frame, input);
 
     // Step 4: render panels
     if ui.widgets.left_panel.is_open {

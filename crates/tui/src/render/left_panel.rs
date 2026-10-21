@@ -16,7 +16,7 @@ pub fn render_left_panel(ws: &mut WorkspaceState, ui: &mut Ui, frame: &mut Frame
     frame.render_stateful_widget(
         left_panel_widget,
         ui.widgets.left_panel.geometry,
-        &mut ui.widgets.left_panel.state,
+        ui.as_mut(),
     );
 }
 

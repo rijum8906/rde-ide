@@ -3,7 +3,11 @@
 //! This module defines the error types used throughout the project.
 //! It provides a unified way to handle errors and propagate them through the application.
 
+mod text;
+
 use std::path::PathBuf;
+
+pub use text::{IndexKind, PositionError, TextError, TextResult};
 
 /// The unified error type for the IDE project.
 ///
@@ -102,6 +106,10 @@ pub enum DomainError {
     NoPath,
 
     // --- Buffer / piece-table ---
+    /// A text-buffer edit was rejected (bad offset, range, or encoding).
+    #[error("text edit failed: {0}")]
+    Text(#[from] TextError),
+
     #[error("offset {offset} is out of bounds (buffer length is {len})")]
     OffsetOutOfBounds { offset: usize, len: usize },
 

@@ -58,6 +58,9 @@ Motions and edits follow Vim conventions where they are implemented.
 | `l` / `→` | Move right |
 | `0` | Start of line |
 | `$` | End of line |
+| `w` | Start of the next word |
+| `b` | Start of the previous word |
+| `e` | End of the current or next word |
 | `gg` | Start of file |
 | `G` | End of file |
 
@@ -86,6 +89,11 @@ Arrow keys also move the cursor in insert mode.
 | `Enter` | Insert a newline (insert mode) |
 | `Backspace` | Delete the character before the cursor (insert mode) |
 | `dd` | Delete the current line (normal mode) |
+| `u` | Undo the last edit group (normal mode) |
+| `Ctrl+R` | Redo the last undone group (normal mode) |
+
+Typing and backspaces are grouped, so one undo removes a typed run rather
+than a single character; newlines start a new undo step.
 
 ### Command mode
 
@@ -125,8 +133,8 @@ Supported ex commands:
 
 Additional bindings are declared in
 [`crates/editor-core/src/input/keymap/`](crates/editor-core/src/input/keymap)
-(buffer switching, fullscreen, word motions, and so on). Their handlers are
-still `todo!()`; see [Status](#status).
+(buffer switching, fullscreen, and so on). Many of their handlers are still
+`todo!()`; see [Status](#status).
 
 ## Status
 
@@ -135,7 +143,8 @@ Implemented end to end:
 - Opening a buffer at startup and rendering it with a gutter, cursor, and
   current-line highlight.
 - Insert, newline, backspace, and delete-line edits.
-- Single-step, line, and file motions.
+- Single-step, line, file, and word (`w`/`b`/`e`) motions.
+- Per-buffer undo/redo with coalesced typing runs (`u` / `Ctrl+R`).
 - Normal/insert/visual/command mode transitions, including the edits implied
   by `a`, `A`, `I`, `o`, and `O`.
 - A floating command palette with caret editing, history browsing, and the
@@ -148,9 +157,9 @@ Scaffolded but not implemented — invoking these currently panics with
 
 - Buffer switching and closing (`Tab`, `Ctrl+W`, `b n`/`b p`/`b d`/`b D`).
 - Fullscreen mode, the right panel, and panel focus.
-- Word, paragraph, page, and bracket motions.
-- Yank/paste, undo/redo, and motion-prefixed changes (`d{motion}`,
-  `c{motion}`, `y{motion}`).
+- Paragraph, page, and bracket motions.
+- Yank/paste and motion-prefixed changes (`d{motion}`, `c{motion}`,
+  `y{motion}`).
 - Save-as, save-all, open-file, and new-scratch-buffer prompts.
 
 ## Project layout

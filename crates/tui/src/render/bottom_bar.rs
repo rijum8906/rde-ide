@@ -10,25 +10,26 @@ use crate::{
     widgets::bottom_bar::BottomBarWidget,
 };
 
-pub fn render_bottom_bar(
+pub fn render_bottom_bar<T: AsRef<InputMode>>(
     ws: &mut WorkspaceState,
     ui: &mut Ui,
     frame: &mut Frame,
-    input_mode: InputMode,
+    input: &T,
 ) {
+    let input_mode = input.as_ref();
     let bottom_bar_view = build_bottom_bar_view(ws, ui, input_mode);
     let bottom_bar_widget = BottomBarWidget::new(&bottom_bar_view);
     frame.render_stateful_widget(
         bottom_bar_widget,
         ui.widgets.bottom_bar.geometry,
-        &mut ui.widgets.bottom_bar.state,
+        ui.as_mut(),
     );
 }
 
 fn build_bottom_bar_view(
     ws: &mut WorkspaceState,
     ui: &mut Ui,
-    input_mode: InputMode,
+    input_mode: &InputMode,
 ) -> BottomBarView {
     let active_idx = ws.active_buffer_idx();
     let (file_name, is_dirty, line_count) = match ws.buffers().get(active_idx) {

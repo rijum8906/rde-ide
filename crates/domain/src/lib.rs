@@ -9,4 +9,6 @@
 
 pub mod buffer;
 pub mod error;
+pub mod piece_table;
+pub mod word;
 pub mod workspace;

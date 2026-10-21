@@ -12,11 +12,7 @@ use crate::{
 pub fn render_top_bar(ws: &mut WorkspaceState, ui: &mut Ui, frame: &mut Frame) {
     let top_bar_view = build_top_bar_view(ws);
     let top_bar = TopBarWidget::new(&top_bar_view);
-    frame.render_stateful_widget(
-        top_bar,
-        ui.widgets.top_bar.geometry,
-        &mut ui.widgets.top_bar.state,
-    );
+    frame.render_stateful_widget(top_bar, ui.widgets.top_bar.geometry, ui.as_mut());
 }
 
 fn build_top_bar_view<'a>(workspace: &'a mut WorkspaceState) -> TopBarView<'a> {
